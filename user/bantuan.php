@@ -74,25 +74,33 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
-        --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --primary-color: #10b981;
+        --primary-light: #34d399;
+        --primary-dark: #059669;
+        --secondary-color: #3b82f6;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
+        --navbar-bg: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 16px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background: var(--light-bg);
         color: var(--text-dark);
-        transition: .3s;
+        transition: var(--transition);
         min-height: 100vh;
+        line-height: 1.6;
     }
 
     body.dark-mode {
@@ -103,7 +111,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 1rem 0;
     }
 
@@ -134,9 +142,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         border: 1px solid rgba(255, 255, 255, .3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: .3s;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -146,7 +154,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .theme-toggle {
@@ -160,7 +169,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         justify-content: center;
         color: #fff;
         cursor: pointer;
-        transition: .3s;
+        transition: var(--transition);
         margin-right: 10px;
     }
 
@@ -170,7 +179,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
     }
 
     .page-title {
@@ -195,10 +204,11 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: .3s;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
         border-left: 4px solid var(--primary-color);
+        overflow: hidden;
     }
 
     body.dark-mode .card-custom {
@@ -208,6 +218,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
     .card-custom:hover {
         transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .form-control,
@@ -217,6 +228,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         border-radius: 12px;
         background: var(--card-light);
         color: var(--text-dark);
+        transition: var(--transition);
     }
 
     .input-group-text {
@@ -238,7 +250,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     .form-control:focus,
     .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
     }
 
     .btn-primary-custom {
@@ -246,68 +258,216 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
         background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-success-custom {
-        background: var(--secondary-color);
+        background: var(--primary-color);
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-success-custom:hover {
-        background: #0d9669;
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .btn-outline-custom {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 10px;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-custom:hover {
+        background: var(--primary-color);
+        color: #fff;
+        transform: translateY(-1px);
     }
 
     .quick-contact .btn {
-        border-radius: 12px
+        border-radius: 12px;
     }
 
     .accordion-button {
         font-weight: 600;
+        background: var(--card-light);
+        color: var(--text-dark);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 8px;
+        border-radius: 12px !important;
+        transition: var(--transition);
+    }
+
+    body.dark-mode .accordion-button {
+        background: var(--card-dark);
+        color: var(--text-light);
+        border-color: #374151;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
     }
 
     .accordion-button:focus {
-        box-shadow: none;
-        border-color: transparent;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+        border-color: var(--primary-color);
+    }
+
+    .accordion-body {
+        background: var(--card-light);
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+    }
+
+    body.dark-mode .accordion-body {
+        background: var(--card-dark);
+        border-color: #374151;
+        color: var(--text-light);
     }
 
     .badge-tip {
-        background: #e0ecff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
         border-radius: 8px;
-        padding: 3px 8px;
-        font-size: .8rem;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    body.dark-mode .badge-tip {
+        background: #064e3b;
+        color: #a7f3d0;
+        border-color: #10b981;
+    }
+
+    .alert-custom {
+        border-radius: var(--border-radius);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-left: 4px solid var(--success-dark);
+    }
+
+    .alert-danger {
+        background: var(--danger-light);
+        color: var(--danger-dark);
+        border-left: 4px solid var(--danger-dark);
+    }
+
+    body.dark-mode .alert-success {
+        background: #064e3b;
+        color: #a7f3d0;
+        border-left-color: #10b981;
+    }
+
+    body.dark-mode .alert-danger {
+        background: #7f1d1d;
+        color: #fecaca;
+        border-left-color: #ef4444;
     }
 
     .small-muted {
         font-size: .9rem;
-        opacity: .8
+        opacity: .8;
+    }
+
+    .contact-info {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: #fff;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .contact-info h6 {
+        color: #fff;
+        margin-bottom: 15px;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .contact-item i {
+        width: 20px;
+        text-align: center;
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(18px)
+            transform: translateY(18px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
     .fade-in-up {
         animation: fadeInUp .6s ease forwards;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 20px 0;
+        }
+
+        .quick-contact .btn {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .contact-info {
+            text-align: center;
+        }
     }
     </style>
 </head>
@@ -316,7 +476,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
                 <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info">
@@ -334,17 +494,36 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
             <h1 class="page-title">Bantuan & Panduan</h1>
 
             <?php if ($msg_success): ?>
-            <div class="alert alert-success border-0"><i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
+            <div class="alert alert-success alert-custom mb-4">
+                <i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
             </div>
             <?php endif; ?>
             <?php if ($msg_error): ?>
-            <div class="alert alert-danger border-0"><i class="fas fa-exclamation-circle me-2"></i><?= h($msg_error); ?>
+            <div class="alert alert-danger alert-custom mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($msg_error); ?>
             </div>
             <?php endif; ?>
 
             <div class="row g-4">
                 <!-- Kolom kiri: FAQ & Panduan -->
                 <div class="col-lg-7">
+                    <!-- Info Kontak -->
+                    <div class="contact-info fade-in-up">
+                        <h6><i class="fas fa-life-ring me-2"></i>Butuh Bantuan Cepat?</h6>
+                        <div class="contact-item">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WhatsApp: <?= h(ADMIN_WHATSAPP); ?></span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email: <?= h(ADMIN_EMAIL); ?></span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Waktu Respons: 1-2 jam kerja</span>
+                        </div>
+                    </div>
+
                     <!-- Pencarian FAQ -->
                     <div class="card-custom p-4 mb-4 fade-in-up">
                         <h5 class="mb-3"><i class="fas fa-search me-2"></i>Cari Pertanyaan</h5>
@@ -488,7 +667,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                 href="mailto:<?= h(ADMIN_EMAIL); ?>?subject=Butuh%20Bantuan%20Sistem%20Informasi%20Kesehatan">
                                 <i class="fas fa-envelope me-2"></i>Kirim Email ke Admin
                             </a>
-                            <button id="copyEmail" class="btn btn-outline-secondary">
+                            <button id="copyEmail" class="btn btn-outline-custom">
                                 <i class="fas fa-copy me-2"></i>Salin Email Admin
                             </button>
                         </div>
@@ -505,17 +684,17 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                         <form method="post" novalidate>
                             <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf_bantuan']); ?>">
                             <div class="mb-3">
-                                <label class="form-label">Nama</label>
+                                <label class="form-label fw-semibold">Nama</label>
                                 <input type="text" name="nama" class="form-control" required
                                     value="<?= h($_SESSION['nama']); ?>">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Email</label>
+                                <label class="form-label fw-semibold">Email</label>
                                 <input type="email" name="email" class="form-control" required
                                     placeholder="email@contoh.com">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Topik</label>
+                                <label class="form-label fw-semibold">Topik</label>
                                 <select name="topik" class="form-select">
                                     <option>Umum</option>
                                     <option>Login / Akun</option>
@@ -528,7 +707,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Pesan</label>
+                                <label class="form-label fw-semibold">Pesan</label>
                                 <textarea name="pesan" rows="5" class="form-control" required
                                     placeholder="Jelaskan kendala Anda..."></textarea>
                             </div>

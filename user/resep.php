@@ -10,26 +10,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 
 $user_id = (int)$_SESSION['id'];
 
-/* ============================================================
-   MIGRASI RINGAN: Buat tabel resep jika belum ada
-   ============================================================ */
-$createSql = "
-CREATE TABLE IF NOT EXISTS resep (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    dokter_id INT NOT NULL,
-    tanggal DATE NOT NULL,
-    obat JSON NULL,           -- Simpan list obat (nama, dosis, aturan) dalam JSON
-    catatan TEXT NULL,
-    status ENUM('baru','tebus','selesai') NOT NULL DEFAULT 'baru',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_user (user_id),
-    INDEX idx_dokter (dokter_id),
-    INDEX idx_tanggal (tanggal),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-mysqli_query($conn, $createSql);
 
 /* ============================================================
    Helper
@@ -45,9 +25,9 @@ function wa_link($no) {
 }
 function status_badge($s){
     $m = [
-        'baru'   => ['#3b82f6','Baru'],
+        'baru'   => ['#10b981','Baru'],
         'tebus'  => ['#f59e0b','Perlu Tebus'],
-        'selesai'=> ['#10b981','Selesai'],
+        'selesai'=> ['#3b82f6','Selesai'],
     ];
     $x = $m[$s] ?? ['#6b7280',$s];
     return '<span class="badge-status" style="background:'.$x[0].'">'.$x[1].'</span>';
@@ -183,42 +163,40 @@ mysqli_stmt_close($stmt);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
-        --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --primary-color: #10b981;
+        --primary-light: #34d399;
+        --primary-dark: #059669;
+        --secondary-color: #3b82f6;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
+        --navbar-bg: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 16px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all .3s ease;
+        transition: var(--transition);
         min-height: 100vh;
-    }
-
-    body.dark-mode {
-        background-color: var(--dark-bg);
-        color: var(--text-light);
+        line-height: 1.6;
     }
 
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 1rem 0;
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color);
     }
 
     .navbar-brand {
@@ -238,34 +216,14 @@ mysqli_stmt_close($stmt);
         gap: 10px;
     }
 
-    .theme-toggle {
-        background: rgba(255, 255, 255, .2);
-        border: none;
-        border-radius: 8px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        cursor: pointer;
-        transition: all .3s ease;
-        margin-right: 10px;
-    }
-
-    .theme-toggle:hover {
-        background: rgba(255, 255, 255, .3);
-        transform: rotate(20deg);
-    }
-
     .btn-logout {
         background: rgba(255, 255, 255, .2);
         border: 1px solid rgba(255, 255, 255, .3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -275,11 +233,12 @@ mysqli_stmt_close($stmt);
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
         min-height: calc(100vh - 120px);
     }
 
@@ -305,42 +264,32 @@ mysqli_stmt_close($stmt);
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: all .3s ease;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
         border-left: 4px solid var(--primary-color);
-    }
-
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2);
+        overflow: hidden;
     }
 
     .card-custom:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, .14);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .form-control,
     .form-select {
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 11px 12px;
+        padding: 12px 15px;
         background: var(--card-light);
         color: var(--text-dark);
-    }
-
-    body.dark-mode .form-control,
-    body.dark-mode .form-select {
-        background: var(--card-dark);
-        border-color: #374151;
-        color: var(--text-light);
+        transition: var(--transition);
     }
 
     .form-control:focus,
     .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
     }
 
     .btn-primary-custom {
@@ -348,12 +297,37 @@ mysqli_stmt_close($stmt);
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
-        transition: all .2s ease;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .btn-success-custom {
+        background: var(--primary-color);
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 10px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-success-custom:hover {
         background: var(--primary-dark);
         transform: translateY(-1px);
     }
@@ -363,67 +337,173 @@ mysqli_stmt_close($stmt);
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 9px 14px;
+        padding: 10px 16px;
         border-radius: 10px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
     }
 
     .btn-danger-custom:hover {
         background: #dc2626;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-custom {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 10px;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-custom:hover {
+        background: var(--primary-color);
+        color: #fff;
+        transform: translateY(-1px);
     }
 
     .table-custom thead th {
-        background: #3b82f6;
+        background: var(--primary-color);
         color: #fff;
         border: none;
+        font-weight: 600;
+        padding: 16px 12px;
     }
 
     .table-custom tbody td {
         vertical-align: middle;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .badge-status {
         display: inline-block;
         color: #fff;
-        padding: 6px 10px;
-        border-radius: 999px;
+        padding: 6px 12px;
+        border-radius: 20px;
         font-size: .8rem;
+        font-weight: 600;
     }
 
     .badge-sp {
-        background: #e0ecff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
         border-radius: 8px;
-        padding: 3px 8px;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .alert-custom {
+        border-radius: var(--border-radius);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-left: 4px solid var(--success-dark);
+    }
+
+    .alert-danger {
+        background: var(--danger-light);
+        color: var(--danger-dark);
+        border-left: 4px solid var(--danger-dark);
     }
 
     .fade-in-up {
         animation: fadeInUp .6s ease forwards;
     }
 
+    .medicine-row {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .medicine-row:hover {
+        background: #f1f5f9;
+    }
+
+    .remove-row {
+        transition: var(--transition);
+    }
+
+    .remove-row:hover {
+        transform: scale(1.1);
+    }
+
+    .modal-header-custom {
+        background: var(--primary-color);
+        color: #fff;
+        border-bottom: none;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(18px)
+            transform: translateY(18px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
     @media print {
         .no-print {
-            display: none !important
+            display: none !important;
         }
 
         .print-area {
-            padding: 20px
+            padding: 20px;
         }
 
         body {
-            background: #fff
+            background: #fff;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 20px 0;
+        }
+
+        .medicine-row .row {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .medicine-row .col-md-1 {
+            text-align: center;
+        }
+
+        .btn-primary-custom,
+        .btn-outline-custom {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
         }
     }
     </style>
@@ -433,9 +513,8 @@ mysqli_stmt_close($stmt);
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg no-print">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info">
                     <i class="fas fa-user"></i>
                     <span><?= h($_SESSION['nama']); ?> (User)</span>
@@ -450,34 +529,38 @@ mysqli_stmt_close($stmt);
             <h1 class="page-title">Resep Digital</h1>
 
             <?php if ($msg_success): ?>
-            <div class="alert alert-success border-0"><?= h($msg_success); ?></div>
+            <div class="alert alert-success alert-custom mb-4">
+                <i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
+            </div>
             <?php endif; ?>
             <?php if ($msg_error): ?>
-            <div class="alert alert-danger border-0"><?= h($msg_error); ?></div>
+            <div class="alert alert-danger alert-custom mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($msg_error); ?>
+            </div>
             <?php endif; ?>
 
-            <!-- Form Tambah Resep (boleh dimatikan kalau hanya read-only) -->
+            <!-- Form Tambah Resep -->
             <div class="card-custom p-4 mb-4 fade-in-up no-print">
                 <h5 class="mb-3"><i class="fas fa-prescription-bottle-alt me-2"></i> Tambah Resep</h5>
                 <form method="post" id="formResep" class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Dokter</label>
+                        <label class="form-label fw-semibold">Dokter</label>
                         <select name="dokter_id" class="form-select" required>
-                            <option value="">— Pilih —</option>
+                            <option value="">— Pilih Dokter —</option>
                             <?php foreach ($doctors as $d): ?>
                             <option value="<?= (int)$d['id']; ?>">
                                 <?= h($d['nama']); ?> (<?= h($d['spesialis']); ?>)
                             </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Pilih dokter penerbit resep.</div>
+                        <div class="form-text">Pilih dokter penerbit resep</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Tanggal Resep</label>
+                        <label class="form-label fw-semibold">Tanggal Resep</label>
                         <input type="date" name="tanggal" class="form-control" required value="<?= date('Y-m-d'); ?>">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Status</label>
+                        <label class="form-label fw-semibold">Status</label>
                         <select name="status" class="form-select">
                             <option value="baru">Baru</option>
                             <option value="tebus">Perlu Tebus</option>
@@ -486,15 +569,16 @@ mysqli_stmt_close($stmt);
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">Daftar Obat</label>
-                        <div id="obatList" class="mb-2"></div>
-                        <button type="button" id="addRow" class="btn btn-sm btn-outline-primary"><i
-                                class="fas fa-plus me-1"></i>Tambah Obat</button>
-                        <div class="form-text">Isi nama obat, dosis, dan aturan pakai.</div>
+                        <label class="form-label fw-semibold">Daftar Obat</label>
+                        <div id="obatList" class="mb-3"></div>
+                        <button type="button" id="addRow" class="btn btn-success-custom">
+                            <i class="fas fa-plus me-1"></i>Tambah Obat
+                        </button>
+                        <div class="form-text">Isi nama obat, dosis, dan aturan pakai</div>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">Catatan (opsional)</label>
+                        <label class="form-label fw-semibold">Catatan (opsional)</label>
                         <textarea name="catatan" class="form-control" rows="3"
                             placeholder="Contoh: Alergi obat tertentu, minum setelah makan..."></textarea>
                     </div>
@@ -503,7 +587,7 @@ mysqli_stmt_close($stmt);
                         <button type="submit" name="tambah" class="btn btn-primary-custom">
                             <i class="fas fa-save me-1"></i> Simpan Resep
                         </button>
-                        <a href="index.php" class="btn btn-outline-secondary">
+                        <a href="index.php" class="btn btn-outline-custom">
                             <i class="fas fa-arrow-left me-1"></i> Kembali
                         </a>
                     </div>
@@ -515,7 +599,7 @@ mysqli_stmt_close($stmt);
                 <h5 class="mb-3"><i class="fas fa-file-medical me-2"></i> Daftar Resep Saya</h5>
 
                 <?php if ($total === 0): ?>
-                <div class="alert alert-info border-0">
+                <div class="alert alert-info alert-custom">
                     <i class="fas fa-info-circle me-2"></i> Belum ada resep.
                 </div>
                 <?php else: ?>
@@ -550,7 +634,7 @@ mysqli_stmt_close($stmt);
                             $wa = wa_link($row['no_hp']);
                         ?>
                             <tr>
-                                <td><?= $no++; ?></td>
+                                <td class="fw-semibold"><?= $no++; ?></td>
                                 <td><?= date('d M Y', strtotime($row['tanggal'])); ?></td>
                                 <td>
                                     <div class="fw-semibold"><?= h($row['dokter_nama']); ?></div>
@@ -562,7 +646,7 @@ mysqli_stmt_close($stmt);
                                     <?php if (!empty($row['no_hp'])): ?>
                                     <div class="small"><i class="fas fa-phone me-1"></i><?= h($row['no_hp']); ?></div>
                                     <?php if ($wa): ?>
-                                    <a class="small" href="<?= h($wa); ?>" target="_blank" rel="noopener"><i
+                                    <a class="small action-link" href="<?= h($wa); ?>" target="_blank" rel="noopener"><i
                                             class="fab fa-whatsapp me-1"></i>WhatsApp</a>
                                     <?php endif; ?>
                                     <?php else: ?>
@@ -571,22 +655,24 @@ mysqli_stmt_close($stmt);
                                 </td>
                                 <td class="small"><?= h($ringkas_text); ?></td>
                                 <td class="no-print">
-                                    <!-- Detail -->
-                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
-                                        data-bs-target="#detailModal"
-                                        data-resep='<?= h(json_encode($row), ENT_QUOTES); ?>'>
-                                        <i class="fas fa-eye me-1"></i> Detail
-                                    </button>
-                                    <!-- Cetak -->
-                                    <button class="btn btn-sm btn-outline-success me-1"
-                                        onclick='printResep(<?= json_encode($row, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT); ?>)'>
-                                        <i class="fas fa-print me-1"></i> Cetak
-                                    </button>
-                                    <!-- Hapus -->
-                                    <a class="btn btn-sm btn-outline-danger" href="?hapus=<?= h($row['id']); ?>"
-                                        onclick="return confirm('Hapus resep ini?');">
-                                        <i class="fas fa-trash me-1"></i> Hapus
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <!-- Detail -->
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                            data-bs-target="#detailModal"
+                                            data-resep='<?= h(json_encode($row), ENT_QUOTES); ?>'>
+                                            <i class="fas fa-eye me-1"></i> Detail
+                                        </button>
+                                        <!-- Cetak -->
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick='printResep(<?= json_encode($row, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT); ?>)'>
+                                            <i class="fas fa-print me-1"></i> Cetak
+                                        </button>
+                                        <!-- Hapus -->
+                                        <a class="btn btn-sm btn-outline-danger" href="?hapus=<?= h($row['id']); ?>"
+                                            onclick="return confirm('Hapus resep ini?');">
+                                            <i class="fas fa-trash me-1"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -596,7 +682,7 @@ mysqli_stmt_close($stmt);
 
                 <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                <nav class="mt-3 d-flex justify-content-center no-print">
+                <nav class="mt-4 d-flex justify-content-center no-print">
                     <ul class="pagination">
                         <?php
                     $build = function($p){ $qs = $_GET; $qs['page']=$p; return '?' . http_build_query($qs); };
@@ -624,7 +710,7 @@ mysqli_stmt_close($stmt);
                                 href="<?= $page>=$total_pages?'#':$build($next); ?>">&raquo;</a></li>
                     </ul>
                 </nav>
-                <p class="text-center small text-muted mt-1 no-print">
+                <p class="text-center small text-muted mt-2 no-print">
                     Menampilkan <?= min($per_page, max(0, $total - $offset)); ?> dari <?= $total; ?> resep.
                 </p>
                 <?php endif; ?>
@@ -637,7 +723,7 @@ mysqli_stmt_close($stmt);
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background:#3b82f6;color:#fff;">
+                <div class="modal-header modal-header-custom">
                     <h5 class="modal-title"><i class="fas fa-prescription me-2"></i>Detail Resep</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -645,10 +731,12 @@ mysqli_stmt_close($stmt);
                     <div id="detailBody"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary-custom" id="btnCetakModal"><i
-                            class="fas fa-print me-1"></i>Cetak</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i
-                            class="fas fa-times me-1"></i>Tutup</button>
+                    <button type="button" class="btn btn-primary-custom" id="btnCetakModal">
+                        <i class="fas fa-print me-1"></i>Cetak
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Tutup
+                    </button>
                 </div>
             </div>
         </div>
@@ -659,40 +747,30 @@ mysqli_stmt_close($stmt);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Dark mode toggle
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
     // Dinamis: baris obat
     const list = document.getElementById('obatList');
     const addRowBtn = document.getElementById('addRow');
 
     function rowTpl() {
         const wrap = document.createElement('div');
-        wrap.className = 'row g-2 align-items-end mb-2';
+        wrap.className = 'medicine-row';
         wrap.innerHTML = `
-    <div class="col-md-4">
-      <input type="text" name="nama_obat[]" class="form-control" placeholder="Nama obat" required>
-    </div>
-    <div class="col-md-3">
-      <input type="text" name="dosis[]" class="form-control" placeholder="Dosis (misal: 500 mg)">
-    </div>
-    <div class="col-md-4">
-      <input type="text" name="aturan[]" class="form-control" placeholder="Aturan pakai (misal: 3x1)">
-    </div>
-    <div class="col-md-1 d-grid">
-      <button type="button" class="btn btn-danger-custom remove-row"><i class="fas fa-times"></i></button>
-    </div>`;
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="nama_obat[]" class="form-control" placeholder="Nama obat" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="dosis[]" class="form-control" placeholder="Dosis (misal: 500 mg)">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="aturan[]" class="form-control" placeholder="Aturan pakai (misal: 3x1)">
+                </div>
+                <div class="col-md-1 d-grid">
+                    <button type="button" class="btn btn-danger-custom remove-row">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>`;
         return wrap;
     }
 
@@ -702,7 +780,7 @@ mysqli_stmt_close($stmt);
     addRowBtn?.addEventListener('click', addRow);
     list?.addEventListener('click', (e) => {
         if (e.target.closest('.remove-row')) {
-            const r = e.target.closest('.row');
+            const r = e.target.closest('.medicine-row');
             if (r) r.remove();
         }
     });
@@ -725,30 +803,50 @@ mysqli_stmt_close($stmt);
             let rows = '';
             if (Array.isArray(obat) && obat.length) {
                 rows = obat.map((o, i) => `
-        <tr>
-          <td>${i+1}</td>
-          <td>${(o.nama||'')}</td>
-          <td>${(o.dosis||'')}</td>
-          <td>${(o.aturan||'')}</td>
-        </tr>
-      `).join('');
+                    <tr>
+                        <td class="fw-semibold">${i+1}</td>
+                        <td>${(o.nama||'')}</td>
+                        <td>${(o.dosis||'')}</td>
+                        <td>${(o.aturan||'')}</td>
+                    </tr>
+                `).join('');
             } else {
-                rows = `<tr><td colspan="4" class="text-muted">Tidak ada data obat.</td></tr>`;
+                rows = `<tr><td colspan="4" class="text-muted text-center">Tidak ada data obat.</td></tr>`;
             }
             detailBody.innerHTML = `
-      <div class="mb-2"><strong>Tanggal:</strong> ${new Date(data.tanggal).toLocaleDateString('id-ID')}</div>
-      <div class="mb-2"><strong>Dokter:</strong> ${data.dokter_nama} <span class="badge bg-primary ms-2">${data.spesialis}</span></div>
-      <div class="mb-2"><strong>Status:</strong> ${statusBadgeHtml(data.status)}</div>
-      ${data.catatan ? `<div class="mb-3"><strong>Catatan:</strong> ${escapeHtml(data.catatan)}</div>` : ''}
-      <div class="table-responsive">
-        <table class="table table-bordered">
-          <thead class="table-light">
-            <tr><th style="width:46px">#</th><th>Nama Obat</th><th>Dosis</th><th>Aturan Pakai</th></tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Tanggal:</strong> ${new Date(data.tanggal).toLocaleDateString('id-ID')}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong> ${statusBadgeHtml(data.status)}
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong>Dokter:</strong> ${data.dokter_nama} 
+                    <span class="badge-sp ms-2">${data.spesialis}</span>
+                </div>
+                ${data.catatan ? `
+                <div class="mb-3">
+                    <strong>Catatan:</strong> 
+                    <div class="mt-1 p-2 bg-light rounded">${escapeHtml(data.catatan)}</div>
+                </div>` : ''}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:46px">#</th>
+                                <th>Nama Obat</th>
+                                <th>Dosis</th>
+                                <th>Aturan Pakai</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
         } catch (e) {
             detailBody.innerHTML = '<div class="text-danger">Gagal memuat detail.</div>';
         }
@@ -765,33 +863,33 @@ mysqli_stmt_close($stmt);
         const rows = (Array.isArray(obat) && obat.length) ?
             obat.map((o, i) =>
                 `<tr><td>${i+1}</td><td>${escapeHtml(o.nama||'')}</td><td>${escapeHtml(o.dosis||'')}</td><td>${escapeHtml(o.aturan||'')}</td></tr>`
-                ).join('') :
-            `<tr><td colspan="4" class="text-muted">Tidak ada data obat.</td></tr>`;
+            ).join('') :
+            `<tr><td colspan="4" class="text-muted text-center">Tidak ada data obat.</td></tr>`;
 
         area.innerHTML = `
-    <div style="max-width:900px;margin:0 auto;font-family:Inter,Arial,sans-serif;">
-      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:12px">
-        <div style="font-weight:700;font-size:20px;color:#1e293b">Resep Digital</div>
-        <div style="color:#6b7280;font-size:12px">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
-      </div>
-      <div style="margin-bottom:8px"><strong>Tanggal:</strong> ${new Date(data.tanggal).toLocaleDateString('id-ID')}</div>
-      <div style="margin-bottom:8px"><strong>Dokter:</strong> ${escapeHtml(data.dokter_nama)} (${escapeHtml(data.spesialis)})</div>
-      ${data.catatan ? `<div style="margin-bottom:8px"><strong>Catatan:</strong> ${escapeHtml(data.catatan)}</div>` : ''}
-      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb">
-        <thead>
-          <tr style="background:#f1f5f9">
-            <th style="border:1px solid #e5e7eb;padding:8px;width:46px;text-align:left">#</th>
-            <th style="border:1px solid #e5e7eb;padding:8px;text-align:left">Nama Obat</th>
-            <th style="border:1px solid #e5e7eb;padding:8px;text-align:left">Dosis</th>
-            <th style="border:1px solid #e5e7eb;padding:8px;text-align:left">Aturan Pakai</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="margin-top:16px;color:#6b7280;font-size:12px">
-        *Dokumen ini bersifat informasi. Ikuti arahan dokter & baca etiket apotek.
-      </div>
-    </div>`;
+            <div style="max-width:900px;margin:0 auto;font-family:Inter,Arial,sans-serif;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #10b981;padding-bottom:12px;margin-bottom:16px">
+                    <div style="font-weight:700;font-size:24px;color:#065f46">Resep Digital</div>
+                    <div style="color:#6b7280;font-size:12px">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
+                </div>
+                <div style="margin-bottom:12px"><strong>Tanggal:</strong> ${new Date(data.tanggal).toLocaleDateString('id-ID')}</div>
+                <div style="margin-bottom:12px"><strong>Dokter:</strong> ${escapeHtml(data.dokter_nama)} (${escapeHtml(data.spesialis)})</div>
+                ${data.catatan ? `<div style="margin-bottom:12px"><strong>Catatan:</strong> ${escapeHtml(data.catatan)}</div>` : ''}
+                <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;margin-bottom:16px">
+                    <thead>
+                        <tr style="background:#d1fae5">
+                            <th style="border:1px solid #e5e7eb;padding:12px;width:46px;text-align:left">#</th>
+                            <th style="border:1px solid #e5e7eb;padding:12px;text-align:left">Nama Obat</th>
+                            <th style="border:1px solid #e5e7eb;padding:12px;text-align:left">Dosis</th>
+                            <th style="border:1px solid #e5e7eb;padding:12px;text-align:left">Aturan Pakai</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div style="margin-top:20px;color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;padding-top:8px">
+                    *Dokumen ini bersifat informasi. Ikuti arahan dokter & baca etiket apotek.
+                </div>
+            </div>`;
         const w = window.open('', '_blank', 'width=900,height=700');
         w.document.write('<html><head><title>Cetak Resep</title></head><body>' + area.innerHTML + '</body></html>');
         w.document.close();
@@ -812,9 +910,9 @@ mysqli_stmt_close($stmt);
 
     function statusBadgeHtml(s) {
         const map = {
-            baru: '#3b82f6',
+            baru: '#10b981',
             tebus: '#f59e0b',
-            selesai: '#10b981'
+            selesai: '#3b82f6'
         };
         const label = {
             baru: 'Baru',
@@ -823,7 +921,7 @@ mysqli_stmt_close($stmt);
         };
         const color = map[s] || '#6b7280';
         const text = label[s] || s;
-        return `<span style="display:inline-block;color:#fff;background:${color};padding:4px 10px;border-radius:999px;font-size:.85rem">${text}</span>`;
+        return `<span style="display:inline-block;color:#fff;background:${color};padding:6px 12px;border-radius:20px;font-size:.85rem;font-weight:600">${text}</span>`;
     }
     </script>
 </body>

@@ -127,25 +127,33 @@ function wa_link($no) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
-        --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --primary-color: #10b981;
+        --primary-light: #34d399;
+        --primary-dark: #059669;
+        --secondary-color: #3b82f6;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
+        --navbar-bg: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 16px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all .3s ease;
+        transition: var(--transition);
         min-height: 100vh;
+        line-height: 1.6;
     }
 
     body.dark-mode {
@@ -156,7 +164,7 @@ function wa_link($no) {
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 1rem 0;
     }
 
@@ -193,7 +201,7 @@ function wa_link($no) {
         justify-content: center;
         color: #fff;
         cursor: pointer;
-        transition: all .3s ease;
+        transition: var(--transition);
         margin-right: 10px;
     }
 
@@ -207,9 +215,9 @@ function wa_link($no) {
         border: 1px solid rgba(255, 255, 255, .3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -219,11 +227,12 @@ function wa_link($no) {
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
         min-height: calc(100vh - 120px);
     }
 
@@ -249,11 +258,12 @@ function wa_link($no) {
     .card-doc {
         background: var(--card-light);
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: all .3s ease;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
         height: 100%;
         border-left: 4px solid var(--primary-color);
+        overflow: hidden;
     }
 
     body.dark-mode .card-doc {
@@ -263,7 +273,7 @@ function wa_link($no) {
 
     .card-doc:hover {
         transform: translateY(-6px);
-        box-shadow: 0 12px 28px rgba(0, 0, 0, .15);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .doc-icon {
@@ -272,22 +282,27 @@ function wa_link($no) {
     }
 
     .badge-sp {
-        background: #e0ecff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
     }
 
     body.dark-mode .badge-sp {
-        background: #1e3a8a;
-        color: #bfdbfe;
-        border-color: #1e40af;
+        background: #065f46;
+        color: #a7f3d0;
+        border-color: #10b981;
     }
 
     .search-panel {
         background: var(--card-light);
-        border-radius: 14px;
-        padding: 16px 18px;
-        box-shadow: 0 5px 16px rgba(0, 0, 0, .06);
+        border-radius: var(--border-radius);
+        padding: 24px;
+        box-shadow: var(--box-shadow);
+        margin-bottom: 30px;
     }
 
     body.dark-mode .search-panel {
@@ -300,50 +315,124 @@ function wa_link($no) {
         border: none;
         color: #fff;
         font-weight: 500;
-        padding: 10px 16px;
+        padding: 12px 20px;
         border-radius: 10px;
-        transition: all .2s ease;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
         background: var(--primary-dark);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-outline-custom {
         border: 2px solid var(--primary-color);
         color: var(--primary-color);
         font-weight: 600;
-        padding: 8px 14px;
+        padding: 10px 16px;
         border-radius: 10px;
-        transition: all .2s ease;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .btn-outline-custom:hover {
         background: var(--primary-color);
         color: #fff;
+        transform: translateY(-1px);
     }
 
     .pagination .page-link {
-        border-radius: 8px;
+        border-radius: 10px;
         border: none;
         margin: 0 4px;
         box-shadow: 0 3px 8px rgba(0, 0, 0, .06);
+        font-weight: 500;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
     }
 
     .fade-in-up {
         animation: fadeInUp .6s ease forwards;
     }
 
+    .contact-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .contact-buttons .btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .contact-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .info-message {
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        text-align: center;
+        border-left: 4px solid var(--success-dark);
+    }
+
+    body.dark-mode .info-message {
+        background: #064e3b;
+        color: #a7f3d0;
+        border-left-color: #10b981;
+    }
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(18px)
+            transform: translateY(18px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 20px 0;
+        }
+
+        .search-panel {
+            padding: 20px;
+        }
+
+        .contact-buttons {
+            flex-direction: column;
+        }
+
+        .btn-primary-custom,
+        .btn-outline-custom {
+            width: 100%;
+            justify-content: center;
         }
     }
     </style>
@@ -354,7 +443,7 @@ function wa_link($no) {
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
-                <i class="fas fa-heartbeat"></i> Sistem Kesehatan
+                <i class="fas fa-heartbeat"></i>Rafflesia Sehat
             </a>
             <div class="d-flex align-items-center">
                 <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
@@ -373,19 +462,19 @@ function wa_link($no) {
             <h1 class="page-title">Daftar Dokter</h1>
 
             <!-- Pencarian & Filter -->
-            <div class="search-panel mb-4 fade-in-up">
-                <form method="get" class="row g-2 align-items-end">
+            <div class="search-panel fade-in-up">
+                <form method="get" class="row g-3 align-items-end">
                     <div class="col-md-5">
-                        <label class="form-label mb-1">Cari</label>
+                        <label class="form-label mb-1 fw-semibold">Cari Dokter</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search text-muted"></i></span>
+                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
                             <input type="text" name="q" class="form-control"
                                 placeholder="Nama, spesialis, alamat, no HP"
                                 value="<?= htmlspecialchars($q, ENT_QUOTES); ?>">
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label mb-1">Spesialis</label>
+                        <label class="form-label mb-1 fw-semibold">Spesialis</label>
                         <select name="spesialis" class="form-select">
                             <option value="">Semua spesialis</option>
                             <?php foreach ($spesialis_list as $s): ?>
@@ -397,7 +486,7 @@ function wa_link($no) {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label mb-1">Urutkan</label>
+                        <label class="form-label mb-1 fw-semibold">Urutkan</label>
                         <select name="sort" class="form-select">
                             <option value="nama_asc" <?= $sort==='nama_asc'?'selected':'';  ?>>Nama A → Z</option>
                             <option value="nama_desc" <?= $sort==='nama_desc'?'selected':''; ?>>Nama Z → A</option>
@@ -420,7 +509,7 @@ function wa_link($no) {
             <div class="row g-4">
                 <?php if ($total_rows === 0): ?>
                 <div class="col-12">
-                    <div class="alert alert-info border-0">
+                    <div class="info-message fade-in-up">
                         <i class="fas fa-info-circle me-2"></i>
                         Belum ada data dokter yang cocok dengan pencarian/filter.
                     </div>
@@ -451,19 +540,18 @@ function wa_link($no) {
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex gap-2 mt-3">
-                            <?php if (!empty($d['no_hp'])): ?>
-                            <a class="btn btn-sm btn-success flex-fill" href="<?= tel_link($d['no_hp']); ?>">
+                        <?php if (!empty($d['no_hp'])): ?>
+                        <div class="contact-buttons">
+                            <a class="btn btn-success" href="<?= tel_link($d['no_hp']); ?>">
                                 <i class="fas fa-phone-alt me-1"></i> Telpon
                             </a>
                             <?php $wa = wa_link($d['no_hp']); if ($wa): ?>
-                            <a class="btn btn-sm btn-primary flex-fill" target="_blank" rel="noopener"
-                                href="<?= $wa; ?>">
+                            <a class="btn btn-primary" target="_blank" rel="noopener" href="<?= $wa; ?>">
                                 <i class="fab fa-whatsapp me-1"></i> WhatsApp
                             </a>
                             <?php endif; ?>
-                            <?php endif; ?>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endwhile; ?>

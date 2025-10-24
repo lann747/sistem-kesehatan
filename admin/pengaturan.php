@@ -180,17 +180,21 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
+        --primary-color: #16a34a;
+        --primary-light: #22c55e;
+        --primary-dark: #15803d;
         --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
+        --navbar-bg: #16a34a;
+        --success-light: #dcfce7;
+        --success-border: #bbf7d0;
+        --warning-light: #fef3c7;
+        --warning-border: #fde68a;
     }
 
     body {
@@ -198,24 +202,15 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         background-color: var(--light-bg);
         color: var(--text-dark);
         transition: .3s;
-        min-height: 100vh
-    }
-
-    body.dark-mode {
-        background-color: var(--dark-bg);
-        color: var(--text-light)
+        min-height: 100vh;
+        line-height: 1.6;
     }
 
     .navbar {
-        background: var(--navbar-bg);
+        background: linear-gradient(135deg, var(--navbar-bg), var(--primary-dark));
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
-        padding: 1rem 0
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color)
+        box-shadow: 0 4px 18px rgba(22, 163, 74, 0.2);
+        padding: 1rem 0;
     }
 
     .navbar-brand {
@@ -224,7 +219,7 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 1.3rem
+        font-size: 1.3rem;
     }
 
     .user-info {
@@ -232,7 +227,7 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 10px
+        gap: 10px;
     }
 
     .btn-logout {
@@ -246,16 +241,16 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px
+        gap: 5px;
     }
 
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
-        transform: translateY(-1px)
+        transform: translateY(-1px);
     }
 
     .main-content {
-        padding: 30px 0
+        padding: 30px 0;
     }
 
     .page-title {
@@ -264,68 +259,183 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         margin-bottom: 10px;
         display: flex;
         align-items: center;
-        gap: 10px
+        gap: 10px;
+        font-size: 1.8rem;
     }
 
     .page-subtitle {
         color: #6b7280;
-        margin-bottom: 20px
-    }
-
-    body.dark-mode .page-subtitle {
-        color: #9ca3af
+        margin-bottom: 20px;
+        font-size: 1.1rem;
     }
 
     .card-custom {
         background: var(--card-light);
         border: none;
         border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
         transition: .3s;
-        border-left: 4px solid var(--primary-color)
-    }
-
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2)
+        border-left: 4px solid var(--primary-color);
+        overflow: hidden;
+        height: 100%;
     }
 
     .card-custom:hover {
-        transform: translateY(-4px)
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
     }
 
     .section-title {
         font-weight: 600;
         color: var(--primary-color);
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         display: flex;
         align-items: center;
-        gap: 8px
+        gap: 10px;
+        font-size: 1.2rem;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .stat-card {
         background: var(--card-light);
         border-radius: 12px;
-        padding: 18px;
+        padding: 20px;
         text-align: center;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
-        border-left: 4px solid var(--secondary-color)
+        box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+        border-left: 4px solid var(--secondary-color);
+        transition: .3s;
     }
 
-    body.dark-mode .stat-card {
-        background: var(--card-dark)
+    .stat-card:hover {
+        transform: translateY(-3px);
     }
 
     .stat-number {
-        font-size: 1rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        color: var(--primary-color)
+        color: var(--primary-color);
+        margin-bottom: 5px;
     }
 
-    .badge-soft {
-        background: #eff6ff;
-        color: #1e3a8a;
-        border: 1px solid #bfdbfe
+    .stat-label {
+        color: #6b7280;
+        font-size: .9rem;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: .3s;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: .3s;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: .3s;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: .3s;
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #4b5563, #6b7280);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(107, 114, 128, 0.3);
+    }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: #166534;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .alert-danger {
+        background: #fef2f2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+
+    .form-control,
+    .form-select,
+    .form-check-input {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 10px 15px;
+        transition: .3s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+    }
+
+    .badge {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
     }
 
     .theme-toggle {
@@ -340,28 +450,80 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         color: #fff;
         cursor: pointer;
         transition: .3s;
-        margin-right: 10px
+        margin-right: 10px;
     }
 
     .theme-toggle:hover {
         background: rgba(255, 255, 255, .3);
-        transform: rotate(20deg)
+        transform: rotate(20deg);
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(20px)
+            transform: translateY(20px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
     .fade-in-up {
-        animation: fadeInUp .6s ease forwards
+        animation: fadeInUp .6s ease forwards;
+    }
+
+    .feature-card {
+        background: var(--card-light);
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 4px solid var(--secondary-color);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+        transition: .3s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .stat-card {
+            margin-top: 15px;
+        }
+
+        .card-custom {
+            border-radius: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .d-flex.flex-wrap.gap-2 {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .main-content {
+            padding: 15px 0;
+        }
+
+        .card-custom {
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+        }
     }
     </style>
 </head>
@@ -370,9 +532,8 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info"><i class="fas fa-user-shield"></i><span><?= h($_SESSION['nama']); ?></span></div>
                 <a href="../logout.php" class="btn-logout ms-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -382,7 +543,7 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
     <div class="main-content">
         <div class="container">
             <!-- Header -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
                 <div>
                     <h1 class="page-title fade-in-up"><i class="fas fa-sliders-h"></i> Pengaturan Sistem</h1>
                     <p class="page-subtitle">Konfigurasi identitas aplikasi, fitur, keamanan, dan ekspor data.</p>
@@ -397,44 +558,47 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
 
             <!-- Notifikasi -->
             <?php if(!empty($notif_success)): ?>
-            <div class="alert alert-success fade-in-up"><i
-                    class="fas fa-check-circle me-2"></i><?= h($notif_success); ?></div>
+            <div class="alert alert-success fade-in-up mb-4">
+                <i class="fas fa-check-circle me-2"></i><?= h($notif_success); ?>
+            </div>
             <?php endif; ?>
             <?php if(!empty($notif_error)): ?>
-            <div class="alert alert-danger fade-in-up"><i
-                    class="fas fa-exclamation-circle me-2"></i><?= h($notif_error); ?></div>
+            <div class="alert alert-danger fade-in-up mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($notif_error); ?>
+            </div>
             <?php endif; ?>
 
             <div class="row g-4">
                 <!-- Pengaturan Umum -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
-                        <h5 class="section-title"><i class="fas fa-wrench"></i> Umum</h5>
+                        <h5 class="section-title"><i class="fas fa-wrench me-2"></i> Pengaturan Umum</h5>
                         <form method="POST" class="row g-3">
                             <input type="hidden" name="csrf" value="<?= h($csrf); ?>">
                             <div class="col-12">
-                                <label class="form-label">Nama Aplikasi</label>
+                                <label class="form-label fw-semibold">Nama Aplikasi</label>
                                 <input type="text" class="form-control" name="site_name"
                                     value="<?= h($settings['site_name'] ?? ''); ?>" required>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Email Kontak</label>
+                                <label class="form-label fw-semibold">Email Kontak</label>
                                 <input type="email" class="form-control" name="kontak_email"
                                     value="<?= h($settings['kontak_email'] ?? ''); ?>" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">No. Telepon</label>
+                                <label class="form-label fw-semibold">No. Telepon</label>
                                 <input type="text" class="form-control" name="kontak_phone"
                                     value="<?= h($settings['kontak_phone'] ?? ''); ?>">
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Alamat Instansi</label>
+                                <label class="form-label fw-semibold">Alamat Instansi</label>
                                 <textarea class="form-control" name="alamat_instansi"
                                     rows="3"><?= h($settings['alamat_instansi'] ?? ''); ?></textarea>
                             </div>
-                            <div class="col-12 d-grid d-md-flex justify-content-md-end">
-                                <button class="btn btn-primary" type="submit" name="simpan_umum"><i
-                                        class="fas fa-save me-1"></i> Simpan</button>
+                            <div class="col-12 d-grid d-md-flex justify-content-md-end mt-3">
+                                <button class="btn btn-primary" type="submit" name="simpan_umum">
+                                    <i class="fas fa-save me-1"></i> Simpan Pengaturan
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -443,31 +607,35 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 <!-- Fitur -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
-                        <h5 class="section-title"><i class="fas fa-toggle-on"></i> Fitur</h5>
+                        <h5 class="section-title"><i class="fas fa-toggle-on me-2"></i> Pengaturan Fitur</h5>
                         <form method="POST" class="row g-3">
                             <input type="hidden" name="csrf" value="<?= h($csrf); ?>">
                             <div class="col-12">
-                                <div class="form-check form-switch">
+                                <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="maintenance"
                                         name="maintenance_mode"
                                         <?= ($settings['maintenance_mode'] ?? '0') === '1' ? 'checked' : ''; ?>>
-                                    <label class="form-check-label" for="maintenance">Aktifkan Maintenance Mode</label>
+                                    <label class="form-check-label fw-semibold" for="maintenance">Aktifkan Maintenance
+                                        Mode</label>
+                                    <div class="form-text text-muted">
+                                        Saat aktif, Anda bisa menampilkan banner/redirect maintenance (butuh
+                                        implementasi pada index/login jika ingin memblokir non-admin).
+                                    </div>
                                 </div>
-                                <small class="text-muted">Saat aktif, Anda bisa menampilkan banner/redirect maintenance
-                                    (butuh implementasi pada index/login jika ingin memblokir non-admin).</small>
                             </div>
                             <div class="col-12">
-                                <div class="form-check form-switch">
+                                <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="allowReg"
                                         name="allow_registration"
                                         <?= ($settings['allow_registration'] ?? '1') === '1' ? 'checked' : ''; ?>>
-                                    <label class="form-check-label" for="allowReg">Izinkan Pendaftaran Pengguna
-                                        Baru</label>
+                                    <label class="form-check-label fw-semibold" for="allowReg">Izinkan Pendaftaran
+                                        Pengguna Baru</label>
                                 </div>
                             </div>
-                            <div class="col-12 d-grid d-md-flex justify-content-md-end">
-                                <button class="btn btn-primary" type="submit" name="simpan_fitur"><i
-                                        class="fas fa-save me-1"></i> Simpan</button>
+                            <div class="col-12 d-grid d-md-flex justify-content-md-end mt-3">
+                                <button class="btn btn-primary" type="submit" name="simpan_fitur">
+                                    <i class="fas fa-save me-1"></i> Simpan Pengaturan
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -476,25 +644,27 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 <!-- Keamanan (Ubah Password Admin) -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
-                        <h5 class="section-title"><i class="fas fa-lock"></i> Keamanan</h5>
+                        <h5 class="section-title"><i class="fas fa-lock me-2"></i> Keamanan Akun</h5>
                         <form method="POST" class="row g-3">
                             <input type="hidden" name="csrf" value="<?= h($csrf); ?>">
                             <div class="col-12">
-                                <label class="form-label">Password Lama</label>
+                                <label class="form-label fw-semibold">Password Lama</label>
                                 <input type="password" class="form-control" name="password_lama" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Password Baru</label>
+                                <label class="form-label fw-semibold">Password Baru</label>
                                 <input type="password" class="form-control" name="password_baru" minlength="6" required>
+                                <div class="form-text">Minimal 6 karakter</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Konfirmasi Password Baru</label>
+                                <label class="form-label fw-semibold">Konfirmasi Password Baru</label>
                                 <input type="password" class="form-control" name="konfirmasi_password" minlength="6"
                                     required>
                             </div>
-                            <div class="col-12 d-grid d-md-flex justify-content-md-end">
-                                <button class="btn btn-warning" type="submit" name="ubah_password"><i
-                                        class="fas fa-key me-1"></i> Ubah Password</button>
+                            <div class="col-12 d-grid d-md-flex justify-content-md-end mt-3">
+                                <button class="btn btn-warning" type="submit" name="ubah_password">
+                                    <i class="fas fa-key me-1"></i> Ubah Password
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -503,54 +673,83 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 <!-- Ekspor Data -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
-                        <h5 class="section-title"><i class="fas fa-download"></i> Ekspor Data (CSV)</h5>
+                        <h5 class="section-title"><i class="fas fa-download me-2"></i> Ekspor Data (CSV)</h5>
                         <p class="mb-3">Unduh salinan data dalam format CSV untuk keperluan backup/analisis cepat.</p>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a class="btn btn-success" href="?backup=users"><i class="fas fa-file-csv me-1"></i> Export
-                                Users</a>
-                            <a class="btn btn-success" href="?backup=dokter"><i class="fas fa-file-csv me-1"></i> Export
-                                Dokter</a>
-                            <a class="btn btn-success" href="?backup=pasien"><i class="fas fa-file-csv me-1"></i> Export
-                                Pasien</a>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <a class="btn btn-success" href="?backup=users">
+                                <i class="fas fa-users me-1"></i> Export Users
+                            </a>
+                            <a class="btn btn-success" href="?backup=dokter">
+                                <i class="fas fa-user-md me-1"></i> Export Dokter
+                            </a>
+                            <a class="btn btn-success" href="?backup=pasien">
+                                <i class="fas fa-user-injured me-1"></i> Export Pasien
+                            </a>
                         </div>
-                        <small class="text-muted d-block mt-2">CSV diunduh langsung via browser Anda.</small>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-info-circle me-1"></i> CSV akan diunduh langsung via browser Anda.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catatan Peningkatan -->
+            <div class="card-custom p-4 mt-4 fade-in-up">
+                <h5 class="section-title"><i class="fas fa-shield-alt me-2"></i> Rekomendasi Keamanan</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <h6 class="fw-semibold mb-2"><i class="fas fa-key me-2 text-warning"></i> Password Hashing
+                            </h6>
+                            <p class="small mb-0">Pertimbangkan migrasi password ke <b>password_hash()</b> &
+                                <b>password_verify()</b> (algoritma modern) menggantikan MD5.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <h6 class="fw-semibold mb-2"><i class="fas fa-tools me-2 text-primary"></i> Maintenance Mode
+                            </h6>
+                            <p class="small mb-0">Tambahkan middleware <i>maintenance</i> agar non-admin mendapat
+                                halaman/alert maintenance saat mode aktif.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <h6 class="fw-semibold mb-2"><i class="fas fa-user-lock me-2 text-danger"></i> Akses Ekspor
+                            </h6>
+                            <p class="small mb-0">Batasi akses ekspor data agar hanya admin tertentu (opsional: role
+                                granular).</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Back -->
             <div class="mt-4">
-                <a href="index.php" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i> Kembali ke
-                    Dashboard</a>
-            </div>
-
-            <!-- Catatan Peningkatan -->
-            <div class="card-custom p-4 mt-4 fade-in-up">
-                <h6 class="mb-2"><i class="fas fa-shield-alt me-2"></i> Catatan Rekomendasi Keamanan</h6>
-                <ul class="mb-0">
-                    <li>Pertimbangkan migrasi password ke <b>password_hash()</b> & <b>password_verify()</b> (algoritma
-                        modern) menggantikan MD5.</li>
-                    <li>Tambahkan middleware <i>maintenance</i> agar non-admin mendapat halaman/alert maintenance saat
-                        mode aktif.</li>
-                    <li>Batasi akses ekspor data agar hanya admin tertentu (opsional: role granular).</li>
-                </ul>
+                <a href="index.php" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Kembali ke Dashboard
+                </a>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    // Validasi form password
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordForm = document.querySelector('form[name="ubah_password"]');
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function(e) {
+                const passwordBaru = this.querySelector('input[name="password_baru"]').value;
+                const konfirmasi = this.querySelector('input[name="konfirmasi_password"]').value;
+
+                if (passwordBaru !== konfirmasi) {
+                    alert('Konfirmasi password tidak cocok dengan password baru.');
+                    e.preventDefault();
+                }
+            });
+        }
     });
     </script>
 </body>

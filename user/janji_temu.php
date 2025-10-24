@@ -11,22 +11,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 $user_id = (int)$_SESSION['id'];
 
 // --- Pastikan tabel janji_temu ada (migrasi ringan otomatis) ---
-$createSql = "
-CREATE TABLE IF NOT EXISTS janji_temu (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    dokter_id INT NOT NULL,
-    tanggal DATE NOT NULL,
-    jam TIME NOT NULL,
-    keluhan TEXT NULL,
-    status ENUM('menunggu','dikonfirmasi','dibatalkan','selesai') NOT NULL DEFAULT 'menunggu',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_user (user_id),
-    INDEX idx_dokter_waktu (dokter_id, tanggal, jam),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-mysqli_query($conn, $createSql);
 
 // --- Ambil daftar dokter (untuk dropdown) ---
 $doctors = [];
@@ -201,42 +185,40 @@ function status_badge($s) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
-        --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --primary-color: #10b981;
+        --primary-light: #34d399;
+        --primary-dark: #059669;
+        --secondary-color: #3b82f6;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
+        --navbar-bg: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 16px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all .3s ease;
+        transition: var(--transition);
         min-height: 100vh;
-    }
-
-    body.dark-mode {
-        background-color: var(--dark-bg);
-        color: var(--text-light);
+        line-height: 1.6;
     }
 
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 1rem 0;
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color);
     }
 
     .navbar-brand {
@@ -256,34 +238,14 @@ function status_badge($s) {
         gap: 10px;
     }
 
-    .theme-toggle {
-        background: rgba(255, 255, 255, .2);
-        border: none;
-        border-radius: 8px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        cursor: pointer;
-        transition: all .3s ease;
-        margin-right: 10px;
-    }
-
-    .theme-toggle:hover {
-        background: rgba(255, 255, 255, .3);
-        transform: rotate(20deg);
-    }
-
     .btn-logout {
         background: rgba(255, 255, 255, .2);
         border: 1px solid rgba(255, 255, 255, .3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -293,11 +255,12 @@ function status_badge($s) {
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
         min-height: calc(100vh - 120px);
     }
 
@@ -323,42 +286,32 @@ function status_badge($s) {
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: all .3s ease;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
         border-left: 4px solid var(--primary-color);
-    }
-
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2);
+        overflow: hidden;
     }
 
     .card-custom:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, .14);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .form-control,
     .form-select {
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 11px 12px;
+        padding: 12px 15px;
         background: var(--card-light);
         color: var(--text-dark);
-    }
-
-    body.dark-mode .form-control,
-    body.dark-mode .form-select {
-        background: var(--card-dark);
-        border-color: #374151;
-        color: var(--text-light);
+        transition: var(--transition);
     }
 
     .form-control:focus,
     .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
     }
 
     .btn-primary-custom {
@@ -366,70 +319,210 @@ function status_badge($s) {
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
-        transition: all .2s ease;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
         background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .btn-outline-custom {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 10px;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-custom:hover {
+        background: var(--primary-color);
+        color: #fff;
         transform: translateY(-1px);
     }
 
     .table-custom thead th {
-        background: #3b82f6;
+        background: var(--primary-color);
         color: #fff;
         border: none;
+        font-weight: 600;
+        padding: 16px 12px;
     }
 
     .table-custom tbody td {
         vertical-align: middle;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .badge-status {
         display: inline-block;
         color: #fff;
-        padding: 6px 10px;
-        border-radius: 999px;
+        padding: 6px 12px;
+        border-radius: 20px;
         font-size: .8rem;
+        font-weight: 600;
     }
 
     .badge-sp {
-        background: #e0ecff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
         border-radius: 8px;
-        padding: 3px 8px;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
     }
 
     .action-link {
         text-decoration: none;
+        color: var(--primary-color);
+        font-weight: 500;
+        transition: var(--transition);
     }
 
     .action-link:hover {
         text-decoration: underline;
+        color: var(--primary-dark);
     }
 
     .pagination .page-link {
-        border-radius: 8px;
+        border-radius: 10px;
         border: none;
         margin: 0 4px;
         box-shadow: 0 3px 8px rgba(0, 0, 0, .06);
+        font-weight: 500;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .alert-custom {
+        border-radius: var(--border-radius);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-left: 4px solid var(--success-dark);
+    }
+
+    .alert-danger {
+        background: var(--danger-light);
+        color: var(--danger-dark);
+        border-left: 4px solid var(--danger-dark);
     }
 
     .fade-in-up {
         animation: fadeInUp .6s ease forwards;
     }
 
+    .appointment-card {
+        background: var(--card-light);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+        margin-bottom: 20px;
+    }
+
+    .appointment-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    }
+
+    .doctor-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .doctor-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+    }
+
+    .appointment-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .detail-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(18px)
+            transform: translateY(18px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 20px 0;
+        }
+
+        .appointment-details {
+            grid-template-columns: 1fr;
+        }
+
+        .doctor-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .btn-primary-custom,
+        .btn-outline-custom {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
         }
     }
     </style>
@@ -439,9 +532,8 @@ function status_badge($s) {
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info">
                     <i class="fas fa-user"></i>
                     <span><?= h($_SESSION['nama']); ?> (User)</span>
@@ -456,39 +548,44 @@ function status_badge($s) {
             <h1 class="page-title">Buat Janji Temu</h1>
 
             <?php if ($msg_success): ?>
-            <div class="alert alert-success border-0"><?= h($msg_success); ?></div>
+            <div class="alert alert-success alert-custom mb-4">
+                <i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
+            </div>
             <?php endif; ?>
             <?php if ($msg_error): ?>
-            <div class="alert alert-danger border-0"><?= h($msg_error); ?></div>
+            <div class="alert alert-danger alert-custom mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($msg_error); ?>
+            </div>
             <?php endif; ?>
 
             <!-- Form Buat Janji -->
             <div class="card-custom p-4 mb-4 fade-in-up">
+                <h5 class="mb-3"><i class="fas fa-calendar-plus me-2"></i> Buat Janji Baru</h5>
                 <form method="post" class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Pilih Dokter</label>
+                        <label class="form-label fw-semibold">Pilih Dokter</label>
                         <select name="dokter_id" class="form-select" required>
-                            <option value="">— Pilih —</option>
+                            <option value="">— Pilih Dokter —</option>
                             <?php foreach ($doctors as $d): ?>
                             <option value="<?= (int)$d['id']; ?>">
                                 <?= h($d['nama']); ?> (<?= h($d['spesialis']); ?>)
                             </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Pastikan spesialis sesuai keluhan ya.</div>
+                        <div class="form-text">Pastikan spesialis sesuai keluhan Anda</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Tanggal</label>
+                        <label class="form-label fw-semibold">Tanggal</label>
                         <input type="date" name="tanggal" class="form-control" required min="<?= date('Y-m-d'); ?>">
-                        <div class="form-text">Tidak bisa pilih tanggal yang sudah lewat.</div>
+                        <div class="form-text">Tidak bisa memilih tanggal yang sudah lewat</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Jam</label>
+                        <label class="form-label fw-semibold">Jam</label>
                         <input type="time" name="jam" class="form-control" required min="07:00" max="20:00" step="1800">
-                        <div class="form-text">Jam praktik: 07:00–20:00 (kelipatan 30 menit disarankan).</div>
+                        <div class="form-text">Jam praktik: 07:00–20:00 (kelipatan 30 menit)</div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Keluhan (opsional)</label>
+                        <label class="form-label fw-semibold">Keluhan (opsional)</label>
                         <textarea name="keluhan" class="form-control" rows="3"
                             placeholder="Ceritakan singkat keluhan Anda..."></textarea>
                     </div>
@@ -496,7 +593,7 @@ function status_badge($s) {
                         <button type="submit" name="buat" class="btn btn-primary-custom">
                             <i class="fas fa-calendar-check me-1"></i> Buat Janji
                         </button>
-                        <a href="index.php" class="btn btn-outline-secondary">
+                        <a href="index.php" class="btn btn-outline-custom">
                             <i class="fas fa-arrow-left me-1"></i> Kembali
                         </a>
                     </div>
@@ -508,104 +605,171 @@ function status_badge($s) {
                 <h5 class="mb-3"><i class="fas fa-calendar-alt me-2"></i> Janji Temu Saya</h5>
 
                 <?php if ($total === 0): ?>
-                <div class="alert alert-info border-0">
+                <div class="alert alert-info alert-custom">
                     <i class="fas fa-info-circle me-2"></i> Belum ada janji temu.
                 </div>
                 <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-custom align-middle">
-                        <thead>
-                            <tr>
-                                <th style="width: 46px;">#</th>
-                                <th>Dokter</th>
-                                <th>Tanggal</th>
-                                <th>Jam</th>
-                                <th>Status</th>
-                                <th>Kontak</th>
-                                <th>Keluhan</th>
-                                <th style="width: 120px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                        $no = $offset + 1;
-                        foreach ($list as $row):
-                            $future = is_future_slot($row['tanggal'], $row['jam']);
-                            $canCancel = $future && in_array($row['status'], ['menunggu','dikonfirmasi'], true);
-                            $wa = wa_link($row['no_hp']);
-                        ?>
-                            <tr>
-                                <td><?= $no++; ?></td>
-                                <td>
-                                    <div class="fw-semibold"><?= h($row['dokter_nama']); ?></div>
-                                    <div class="badge-sp mt-1"><i
-                                            class="fas fa-stethoscope me-1"></i><?= h($row['spesialis']); ?></div>
-                                </td>
-                                <td><?= date('d M Y', strtotime($row['tanggal'])); ?></td>
-                                <td><?= substr($row['jam'],0,5); ?></td>
-                                <td><?= status_badge($row['status']); ?></td>
-                                <td>
-                                    <?php if (!empty($row['no_hp'])): ?>
-                                    <div class="small"><i class="fas fa-phone me-1"></i><?= h($row['no_hp']); ?></div>
-                                    <?php if ($wa): ?>
-                                    <a class="action-link small" href="<?= h($wa); ?>" target="_blank" rel="noopener">
-                                        <i class="fab fa-whatsapp me-1"></i>WhatsApp
-                                    </a>
-                                    <?php endif; ?>
-                                    <?php else: ?>
-                                    <span class="text-muted small">-</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="small"><?= h($row['keluhan'] ?: '-'); ?></td>
-                                <td>
-                                    <?php if ($canCancel): ?>
-                                    <a class="btn btn-sm btn-outline-danger" href="?batal=<?= h($row['id']); ?>"
-                                        onclick="return confirm('Batalkan janji temu ini?');">
-                                        <i class="fas fa-times me-1"></i> Batal
-                                    </a>
-                                    <?php else: ?>
-                                    <span class="text-muted small">—</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+
+                <!-- Mobile View - Cards -->
+                <div class="d-md-none">
+                    <?php foreach ($list as $row): 
+                        $future = is_future_slot($row['tanggal'], $row['jam']);
+                        $canCancel = $future && in_array($row['status'], ['menunggu','dikonfirmasi'], true);
+                        $wa = wa_link($row['no_hp']);
+                    ?>
+                    <div class="appointment-card">
+                        <div class="doctor-info">
+                            <div class="doctor-icon">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold"><?= h($row['dokter_nama']); ?></div>
+                                <div class="badge-sp mt-1">
+                                    <i class="fas fa-stethoscope me-1"></i><?= h($row['spesialis']); ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="appointment-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Tanggal</span>
+                                <span class="detail-value"><?= date('d M Y', strtotime($row['tanggal'])); ?></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Jam</span>
+                                <span class="detail-value"><?= substr($row['jam'],0,5); ?></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Status</span>
+                                <span class="detail-value"><?= status_badge($row['status']); ?></span>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($row['keluhan'])): ?>
+                        <div class="detail-item mb-3">
+                            <span class="detail-label">Keluhan</span>
+                            <span class="detail-value small"><?= h($row['keluhan']); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="d-flex gap-2">
+                            <?php if (!empty($row['no_hp']) && $wa): ?>
+                            <a class="btn btn-sm btn-primary flex-fill" href="<?= h($wa); ?>" target="_blank"
+                                rel="noopener">
+                                <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if ($canCancel): ?>
+                            <a class="btn btn-sm btn-outline-danger flex-fill" href="?batal=<?= h($row['id']); ?>"
+                                onclick="return confirm('Batalkan janji temu ini?');">
+                                <i class="fas fa-times me-1"></i> Batal
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Desktop View - Table -->
+                <div class="d-none d-md-block">
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 46px;">#</th>
+                                    <th>Dokter</th>
+                                    <th>Tanggal</th>
+                                    <th>Jam</th>
+                                    <th>Status</th>
+                                    <th>Kontak</th>
+                                    <th>Keluhan</th>
+                                    <th style="width: 120px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $no = $offset + 1;
+                                foreach ($list as $row):
+                                    $future = is_future_slot($row['tanggal'], $row['jam']);
+                                    $canCancel = $future && in_array($row['status'], ['menunggu','dikonfirmasi'], true);
+                                    $wa = wa_link($row['no_hp']);
+                                ?>
+                                <tr>
+                                    <td class="fw-semibold"><?= $no++; ?></td>
+                                    <td>
+                                        <div class="fw-semibold"><?= h($row['dokter_nama']); ?></div>
+                                        <div class="badge-sp mt-1"><i
+                                                class="fas fa-stethoscope me-1"></i><?= h($row['spesialis']); ?></div>
+                                    </td>
+                                    <td><?= date('d M Y', strtotime($row['tanggal'])); ?></td>
+                                    <td><?= substr($row['jam'],0,5); ?></td>
+                                    <td><?= status_badge($row['status']); ?></td>
+                                    <td>
+                                        <?php if (!empty($row['no_hp'])): ?>
+                                        <div class="small"><i class="fas fa-phone me-1"></i><?= h($row['no_hp']); ?>
+                                        </div>
+                                        <?php if ($wa): ?>
+                                        <a class="action-link small" href="<?= h($wa); ?>" target="_blank"
+                                            rel="noopener">
+                                            <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php else: ?>
+                                        <span class="text-muted small">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="small"><?= h($row['keluhan'] ?: '-'); ?></td>
+                                    <td>
+                                        <?php if ($canCancel): ?>
+                                        <a class="btn btn-sm btn-outline-danger" href="?batal=<?= h($row['id']); ?>"
+                                            onclick="return confirm('Batalkan janji temu ini?');">
+                                            <i class="fas fa-times me-1"></i> Batal
+                                        </a>
+                                        <?php else: ?>
+                                        <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                <nav class="mt-3 d-flex justify-content-center">
+                <nav class="mt-4 d-flex justify-content-center">
                     <ul class="pagination">
                         <?php
-                    $build = function($p){ $qs = $_GET; $qs['page']=$p; return '?' . http_build_query($qs); };
-                    $prev = max(1, $page-1); $next = min($total_pages, $page+1);
-                    ?>
+                        $build = function($p){ $qs = $_GET; $qs['page']=$p; return '?' . http_build_query($qs); };
+                        $prev = max(1, $page-1); $next = min($total_pages, $page+1);
+                        ?>
                         <li class="page-item <?= $page<=1?'disabled':''; ?>">
                             <a class="page-link" href="<?= $page<=1?'#':$build($prev); ?>">&laquo;</a>
                         </li>
                         <?php
-                    $start = max(1, $page-2);
-                    $end   = min($total_pages, $page+2);
-                    if ($start > 1) {
-                        echo '<li class="page-item"><a class="page-link" href="'.$build(1).'">1</a></li>';
-                        if ($start > 2) echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
-                    }
-                    for ($i=$start; $i<=$end; $i++) {
-                        $active = $i==$page ? 'active' : '';
-                        echo '<li class="page-item '.$active.'"><a class="page-link" href="'.$build($i).'">'.$i.'</a></li>';
-                    }
-                    if ($end < $total_pages) {
-                        if ($end < $total_pages-1) echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
-                        echo '<li class="page-item"><a class="page-link" href="'.$build($total_pages).'">'.$total_pages.'</a></li>';
-                    }
-                    ?>
+                        $start = max(1, $page-2);
+                        $end   = min($total_pages, $page+2);
+                        if ($start > 1) {
+                            echo '<li class="page-item"><a class="page-link" href="'.$build(1).'">1</a></li>';
+                            if ($start > 2) echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
+                        }
+                        for ($i=$start; $i<=$end; $i++) {
+                            $active = $i==$page ? 'active' : '';
+                            echo '<li class="page-item '.$active.'"><a class="page-link" href="'.$build($i).'">'.$i.'</a></li>';
+                        }
+                        if ($end < $total_pages) {
+                            if ($end < $total_pages-1) echo '<li class="page-item disabled"><span class="page-link">…</span></li>';
+                            echo '<li class="page-item"><a class="page-link" href="'.$build($total_pages).'">'.$total_pages.'</a></li>';
+                        }
+                        ?>
                         <li class="page-item <?= $page>=$total_pages?'disabled':''; ?>">
                             <a class="page-link" href="<?= $page>=$total_pages?'#':$build($next); ?>">&raquo;</a>
                         </li>
                     </ul>
                 </nav>
-                <p class="text-center small text-muted mt-1">
+                <p class="text-center small text-muted mt-2">
                     Menampilkan <?= min($per_page, max(0, $total - $offset)); ?> dari <?= $total; ?> janji.
                 </p>
                 <?php endif; ?>
@@ -616,19 +780,6 @@ function status_badge($s) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
     // Client-side guard: tanggal & jam
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.querySelector('input[name="tanggal"]');

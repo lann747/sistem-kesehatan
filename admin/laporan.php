@@ -9,7 +9,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Helper
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function fetch_all($res){
     $rows = [];
     while($r = mysqli_fetch_assoc($res)){ $rows[] = $r; }
@@ -129,49 +129,44 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan - Sistem Informasi Kesehatan</title>
+    <title>Laporan - Rafflesia Sehat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
+        --primary-color: #16a34a;
+        --primary-light: #22c55e;
+        --primary-dark: #15803d;
         --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
-        --table-header: #3b82f6;
+        --navbar-bg: #16a34a;
+        --table-header: #16a34a;
+        --shadow-light: 0 10px 25px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 15px 35px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: .3s;
+        transition: all 0.3s ease;
         min-height: 100vh;
-    }
-
-    body.dark-mode {
-        background-color: var(--dark-bg);
-        color: var(--text-light);
+        line-height: 1.6;
     }
 
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: var(--shadow-medium);
         padding: 1rem 0;
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color);
+        backdrop-filter: blur(10px);
     }
 
     .navbar-brand {
@@ -180,7 +175,7 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 1.3rem;
+        font-size: 1.4rem;
     }
 
     .user-info {
@@ -189,16 +184,20 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         display: flex;
         align-items: center;
         gap: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 15px;
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
     }
 
     .btn-logout {
-        background: rgba(255, 255, 255, .2);
-        border: 1px solid rgba(255, 255, 255, .3);
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
-        border-radius: 8px;
-        transition: .3s;
+        padding: 8px 18px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -206,12 +205,14 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     }
 
     .btn-logout:hover {
-        background: rgba(255, 255, 255, .3);
-        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
+        min-height: calc(100vh - 120px);
     }
 
     .page-title {
@@ -221,141 +222,307 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         display: flex;
         align-items: center;
         gap: 10px;
+        font-size: 2rem;
     }
 
     .page-subtitle {
         color: #6b7280;
-        margin-bottom: 20px;
-    }
-
-    body.dark-mode .page-subtitle {
-        color: #9ca3af;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
     }
 
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: .3s;
-        border-left: 4px solid var(--primary-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--primary-color);
+        overflow: hidden;
+        position: relative;
     }
 
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2);
+    .card-custom::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-color);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
     }
 
     .card-custom:hover {
-        transform: translateY(-4px);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .card-custom:hover::before {
+        transform: scaleX(1);
     }
 
     .stat-card {
         background: var(--card-light);
-        border-radius: 12px;
-        padding: 18px;
+        border-radius: 16px;
+        padding: 25px;
         text-align: center;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
-        border-left: 4px solid var(--secondary-color);
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
     }
 
-    body.dark-mode .stat-card {
-        background: var(--card-dark);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, .2);
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--secondary-color);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
     }
 
     .stat-number {
-        font-size: 1.8rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: var(--primary-color);
-        margin-bottom: 4px;
+        margin-bottom: 8px;
+        display: block;
     }
 
     .stat-label {
         color: #6b7280;
-        font-size: .9rem;
+        font-size: 0.95rem;
         font-weight: 500;
     }
 
     .table-container {
-        border-radius: 12px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+        box-shadow: var(--shadow-light);
+    }
+
+    .table-custom {
+        margin: 0;
+        background: var(--card-light);
+        border-collapse: separate;
+        border-spacing: 0;
     }
 
     .table-custom thead th {
         background: var(--table-header);
         color: #fff;
+        font-weight: 600;
+        padding: 16px 12px;
         border: none;
+        font-size: 0.95rem;
+    }
+
+    .table-custom tbody td {
+        padding: 14px 12px;
+        border-color: #f1f5f9;
+        vertical-align: middle;
+        color: var(--text-dark);
+        transition: all 0.3s ease;
+    }
+
+    .table-custom tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .table-custom tbody tr:hover {
+        background: rgba(22, 163, 74, 0.05);
     }
 
     .badge-role {
-        padding: 4px 8px;
+        padding: 8px 12px;
         border-radius: 8px;
         font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid;
     }
 
     .badge-admin {
         background: #1e40af;
         color: #bfdbfe;
-        border: 1px solid #1d4ed8;
+        border-color: #1d4ed8;
     }
 
     .badge-user {
-        background: #ecfdf5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
+        background: #f0fdf4;
+        color: #15803d;
+        border-color: #bbf7d0;
     }
 
-    .btn-chip {
-        border: 1px solid #dbeafe;
-        background: #eff6ff;
-        color: #1d4ed8;
-        border-radius: 9999px;
-        padding: 6px 12px;
-        font-weight: 600;
-    }
-
-    body.dark-mode .btn-chip {
-        border-color: #334155;
-        background: #0b1220;
-        color: #93c5fd;
-    }
-
-    .theme-toggle {
-        background: rgba(255, 255, 255, .2);
+    .btn-export {
+        background: var(--primary-color);
         border: none;
-        border-radius: 8px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         color: #fff;
-        cursor: pointer;
-        transition: .3s;
-        margin-right: 10px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 3px 8px rgba(22, 163, 74, 0.3);
     }
 
-    .theme-toggle:hover {
-        background: rgba(255, 255, 255, .3);
-        transform: rotate(20deg);
+    .btn-export:hover {
+        background: var(--primary-dark);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(22, 163, 74, 0.4);
+    }
+
+    .btn-secondary-custom {
+        background: #6b7280;
+        border: none;
+        color: #fff;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 3px 8px rgba(107, 114, 128, 0.3);
+    }
+
+    .btn-secondary-custom:hover {
+        background: #4b5563;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(107, 114, 128, 0.4);
+    }
+
+    .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--card-light);
+        color: var(--text-dark);
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    }
+
+    .btn-primary-custom {
+        background: var(--primary-color);
+        border: none;
+        color: #fff;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-primary-custom:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 200px;
+        width: 100%;
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(20px)
+            transform: translateY(30px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
     .fade-in-up {
-        animation: fadeInUp .6s ease forwards;
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 25px 0;
+        }
+
+        .page-title {
+            font-size: 1.6rem;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .export-buttons {
+            flex-direction: column;
+        }
+
+        .btn-export {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .navbar-brand {
+            font-size: 1.2rem;
+        }
+
+        .user-info {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .btn-logout {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+        }
+
+        .main-content {
+            padding: 20px 0;
+        }
+
+        .card-custom {
+            padding: 20px !important;
+        }
     }
     </style>
 </head>
@@ -364,11 +531,19 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php">
+                <i class="fas fa-heartbeat"></i>
+                <span>Rafflesia Sehat</span>
+            </a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
-                <div class="user-info"><i class="fas fa-user-shield"></i><span><?= h($_SESSION['nama']); ?></span></div>
-                <a href="../logout.php" class="btn-logout ms-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <div class="user-info">
+                    <i class="fas fa-user-shield"></i>
+                    <span><?= h($_SESSION['nama']); ?></span>
+                </div>
+                <a href="../logout.php" class="btn-logout ms-3">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
             </div>
         </div>
     </nav>
@@ -376,23 +551,29 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     <div class="main-content">
         <div class="container">
             <!-- Header -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
-                    <h1 class="page-title fade-in-up"><i class="fas fa-chart-bar"></i> Laporan</h1>
-                    <p class="page-subtitle">Ringkasan statistik, rekap, dan visualisasi data.</p>
+                    <h1 class="page-title fade-in-up">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Laporan & Analitik</span>
+                    </h1>
+                    <p class="page-subtitle">Ringkasan statistik, rekap, dan visualisasi data kesehatan</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <a class="btn btn-chip" href="?export=pasien" title="Export CSV Pasien"><i
-                            class="fas fa-file-export me-2"></i>Export Pasien</a>
-                    <a class="btn btn-chip" href="?export=dokter" title="Export CSV Dokter"><i
-                            class="fas fa-file-export me-2"></i>Export Dokter</a>
-                    <a class="btn btn-chip" href="?export=users" title="Export CSV Users"><i
-                            class="fas fa-file-export me-2"></i>Export Users</a>
+                <div class="export-buttons fade-in-up">
+                    <a class="btn-export" href="?export=pasien" title="Export CSV Pasien">
+                        <i class="fas fa-file-export me-1"></i>Export Pasien
+                    </a>
+                    <a class="btn-export" href="?export=dokter" title="Export CSV Dokter">
+                        <i class="fas fa-file-export me-1"></i>Export Dokter
+                    </a>
+                    <a class="btn-export" href="?export=users" title="Export CSV Users">
+                        <i class="fas fa-file-export me-1"></i>Export Users
+                    </a>
                 </div>
             </div>
 
             <!-- Stats -->
-            <div class="row g-3 mb-4 fade-in-up">
+            <div class="row g-4 mb-4 fade-in-up">
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
                         <div class="stat-number"><?= $total_pasien; ?></div>
@@ -420,47 +601,72 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
             </div>
 
             <!-- Filter Keluhan -->
-            <div class="card-custom p-3 mb-4 fade-in-up">
-                <form class="row g-2 align-items-center">
-                    <div class="col-sm-6 col-md-4">
-                        <label class="form-label mb-1">Cari Keluhan</label>
-                        <input type="text" class="form-control" name="q" placeholder="mis. demam, batuk"
+            <div class="card-custom p-4 mb-4 fade-in-up">
+                <h6 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>
+                    <span>Filter Data Keluhan</span>
+                </h6>
+                <form class="row g-3 align-items-end">
+                    <div class="col-md-6 col-lg-4">
+                        <label class="form-label">Cari Keluhan</label>
+                        <input type="text" class="form-control" name="q" placeholder="mis. demam, batuk, sakit kepala"
                             value="<?= h($keyword); ?>">
                     </div>
-                    <div class="col-sm-6 col-md-4 d-flex align-items-end gap-2">
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-search me-1"></i>
-                            Terapkan</button>
-                        <a class="btn btn-secondary" href="laporan.php"><i class="fas fa-undo me-1"></i> Reset</a>
+                    <div class="col-md-6 col-lg-4 d-flex gap-2">
+                        <button class="btn-primary-custom" type="submit">
+                            <i class="fas fa-search me-1"></i> Terapkan
+                        </button>
+                        <a class="btn-secondary-custom" href="laporan.php">
+                            <i class="fas fa-undo me-1"></i> Reset
+                        </a>
                     </div>
-                    <!-- TODO: filter tanggal jika field ada (created_at) -->
                 </form>
             </div>
 
             <!-- Charts -->
             <div class="row g-4 mb-4">
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <h6 class="mb-3"><i class="fas fa-child me-2"></i>Distribusi Umur Pasien</h6>
-                        <canvas id="chartUmur" height="160"></canvas>
+                    <div class="card-custom p-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-child me-2"></i>
+                            <span>Distribusi Umur Pasien</span>
+                        </h6>
+                        <div class="chart-container">
+                            <canvas id="chartUmur"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <h6 class="mb-3"><i class="fas fa-stethoscope me-2"></i>Dokter per Spesialis</h6>
-                        <canvas id="chartSpesialis" height="160"></canvas>
+                    <div class="card-custom p-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-stethoscope me-2"></i>
+                            <span>Dokter per Spesialis</span>
+                        </h6>
+                        <div class="chart-container">
+                            <canvas id="chartSpesialis"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <h6 class="mb-3"><i class="fas fa-bell me-2"></i>Top Keluhan (10
-                            Teratas<?= $keyword ? " - filter: ".h($keyword) : "";?>)</h6>
-                        <canvas id="chartKeluhan" height="160"></canvas>
+                    <div class="card-custom p-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-bell me-2"></i>
+                            <span>Top Keluhan (10 Teratas<?= $keyword ? " - filter: ".h($keyword) : "";?>)</span>
+                        </h6>
+                        <div class="chart-container">
+                            <canvas id="chartKeluhan"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <h6 class="mb-3"><i class="fas fa-users me-2"></i>Distribusi Role Pengguna</h6>
-                        <canvas id="chartRole" height="160"></canvas>
+                    <div class="card-custom p-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-users me-2"></i>
+                            <span>Distribusi Role Pengguna</span>
+                        </h6>
+                        <div class="chart-container">
+                            <canvas id="chartRole"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -468,15 +674,19 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
             <!-- Tabel Preview -->
             <div class="row g-4">
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="fas fa-user-injured me-2"></i>Preview Pasien</h6>
-                            <a class="btn btn-sm btn-chip" href="?export=pasien"><i
-                                    class="fas fa-download me-1"></i>CSV</a>
+                    <div class="card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-injured me-2"></i>
+                                <span>Preview Pasien</span>
+                            </h6>
+                            <a class="btn-export" href="?export=pasien">
+                                <i class="fas fa-download me-1"></i>CSV
+                            </a>
                         </div>
                         <div class="table-container">
                             <div class="table-responsive">
-                                <table class="table table-striped table-custom mb-0">
+                                <table class="table table-custom mb-0">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -488,13 +698,17 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                                     <tbody>
                                         <?php if (!$preview_pasien): ?>
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">Belum ada data.</td>
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox me-2"></i>Belum ada data.
+                                            </td>
                                         </tr>
                                         <?php else: foreach($preview_pasien as $p): ?>
                                         <tr>
-                                            <td><?= (int)$p['id']; ?></td>
+                                            <td class="fw-semibold"><?= (int)$p['id']; ?></td>
                                             <td class="fw-semibold"><?= h($p['nama']); ?></td>
-                                            <td><span class="badge bg-primary"><?= (int)$p['umur']; ?> th</span></td>
+                                            <td><span class="badge bg-primary"
+                                                    style="background: var(--primary-color) !important;"><?= (int)$p['umur']; ?>
+                                                    th</span></td>
                                             <td><?= h($p['keluhan']); ?></td>
                                         </tr>
                                         <?php endforeach; endif; ?>
@@ -506,15 +720,19 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </div>
 
                 <div class="col-lg-6 fade-in-up">
-                    <div class="card-custom p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="fas fa-user-md me-2"></i>Preview Dokter</h6>
-                            <a class="btn btn-sm btn-chip" href="?export=dokter"><i
-                                    class="fas fa-download me-1"></i>CSV</a>
+                    <div class="card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-md me-2"></i>
+                                <span>Preview Dokter</span>
+                            </h6>
+                            <a class="btn-export" href="?export=dokter">
+                                <i class="fas fa-download me-1"></i>CSV
+                            </a>
                         </div>
                         <div class="table-container">
                             <div class="table-responsive">
-                                <table class="table table-striped table-custom mb-0">
+                                <table class="table table-custom mb-0">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -526,11 +744,13 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                                     <tbody>
                                         <?php if (!$preview_dokter): ?>
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">Belum ada data.</td>
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox me-2"></i>Belum ada data.
+                                            </td>
                                         </tr>
                                         <?php else: foreach($preview_dokter as $d): ?>
                                         <tr>
-                                            <td><?= (int)$d['id']; ?></td>
+                                            <td class="fw-semibold"><?= (int)$d['id']; ?></td>
                                             <td class="fw-semibold"><?= h($d['nama']); ?></td>
                                             <td><span class="badge bg-info text-dark"><?= h($d['spesialis']); ?></span>
                                             </td>
@@ -545,15 +765,19 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </div>
 
                 <div class="col-12 fade-in-up">
-                    <div class="card-custom p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="fas fa-users me-2"></i>Preview Pengguna</h6>
-                            <a class="btn btn-sm btn-chip" href="?export=users"><i
-                                    class="fas fa-download me-1"></i>CSV</a>
+                    <div class="card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                <span>Preview Pengguna</span>
+                            </h6>
+                            <a class="btn-export" href="?export=users">
+                                <i class="fas fa-download me-1"></i>CSV
+                            </a>
                         </div>
                         <div class="table-container">
                             <div class="table-responsive">
-                                <table class="table table-striped table-custom mb-0">
+                                <table class="table table-custom mb-0">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -567,11 +791,13 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                                     <tbody>
                                         <?php if (!$preview_users): ?>
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">Belum ada data.</td>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox me-2"></i>Belum ada data.
+                                            </td>
                                         </tr>
                                         <?php else: foreach($preview_users as $u): ?>
                                         <tr>
-                                            <td><?= (int)$u['id']; ?></td>
+                                            <td class="fw-semibold"><?= (int)$u['id']; ?></td>
                                             <td class="fw-semibold"><?= h($u['nama']); ?></td>
                                             <td><?= h($u['email']); ?></td>
                                             <td>
@@ -594,8 +820,10 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
 
                 <!-- Back -->
                 <div class="col-12 fade-in-up">
-                    <a href="index.php" class="btn btn-secondary mt-2"><i class="fas fa-arrow-left me-2"></i>Kembali ke
-                        Dashboard</a>
+                    <a href="index.php" class="btn-secondary-custom mt-2">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        <span>Kembali ke Dashboard</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -606,20 +834,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <script>
-    // Theme toggle
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
     // Data dari PHP
     const umurLabels = <?= json_encode($umur_labels, JSON_UNESCAPED_UNICODE); ?>;
     const umurCounts = <?= json_encode($umur_counts, JSON_UNESCAPED_UNICODE); ?>;
@@ -633,6 +847,15 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     const roleLabels = <?= json_encode($role_labels, JSON_UNESCAPED_UNICODE); ?>;
     const roleCounts = <?= json_encode($role_counts, JSON_UNESCAPED_UNICODE); ?>;
 
+    // Chart colors
+    const chartColors = {
+        primary: '#16a34a',
+        secondary: '#10b981',
+        accent: '#f59e0b',
+        danger: '#ef4444',
+        info: '#3b82f6'
+    };
+
     // Chart Umur (Bar)
     new Chart(document.getElementById('chartUmur'), {
         type: 'bar',
@@ -640,14 +863,23 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
             labels: umurLabels,
             datasets: [{
                 label: 'Jumlah Pasien',
-                data: umurCounts
+                data: umurCounts,
+                backgroundColor: chartColors.primary,
+                borderColor: chartColors.primary,
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
         }
@@ -660,11 +892,15 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
             labels: spesLabels,
             datasets: [{
                 label: 'Jumlah Dokter',
-                data: spesCounts
+                data: spesCounts,
+                backgroundColor: chartColors.secondary,
+                borderColor: chartColors.secondary,
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             indexAxis: spesLabels.length > 6 ? 'y' : 'x',
             plugins: {
                 legend: {
@@ -686,11 +922,15 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
             labels: keluhanLabels,
             datasets: [{
                 label: 'Jumlah Kasus',
-                data: keluhanCounts
+                data: keluhanCounts,
+                backgroundColor: chartColors.accent,
+                borderColor: chartColors.accent,
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
@@ -716,12 +956,28 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         data: {
             labels: roleLabels,
             datasets: [{
-                data: roleCounts
+                data: roleCounts,
+                backgroundColor: [chartColors.primary, chartColors.info],
+                borderWidth: 1
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
+    });
+
+    // Efek hover pada kartu
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.card-custom').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
     });
     </script>
 </body>

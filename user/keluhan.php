@@ -27,9 +27,9 @@ $user_id = (int)$_SESSION['id'];
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 function badge_status($s){
     $map = [
-        'baru'   => ['#3b82f6','Baru'],
+        'baru'   => ['#10b981','Baru'],
         'proses' => ['#f59e0b','Proses'],
-        'selesai'=> ['#10b981','Selesai'],
+        'selesai'=> ['#3b82f6','Selesai'],
     ];
     $x = $map[$s] ?? ['#6b7280',$s];
     return '<span class="badge-status" style="background:'.$x[0].'">'.$x[1].'</span>';
@@ -199,26 +199,34 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
-        --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --primary-color: #10b981;
+        --primary-light: #34d399;
+        --primary-dark: #059669;
+        --secondary-color: #3b82f6;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6;
-        --table-header: #3b82f6;
+        --navbar-bg: #10b981;
+        --table-header: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 16px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all .3s ease;
+        transition: var(--transition);
         min-height: 100vh;
+        line-height: 1.6;
     }
 
     body.dark-mode {
@@ -229,13 +237,8 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 1rem 0;
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color);
     }
 
     .navbar-brand {
@@ -260,9 +263,9 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         border: 1px solid rgba(255, 255, 255, .3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -272,7 +275,8 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     .btn-logout:hover {
         background: rgba(255, 255, 255, .3);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .theme-toggle {
@@ -286,7 +290,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         justify-content: center;
         color: #fff;
         cursor: pointer;
-        transition: all .3s ease;
+        transition: var(--transition);
         margin-right: 10px;
     }
 
@@ -296,7 +300,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     }
 
     .main-content {
-        padding: 30px 0;
+        padding: 40px 0;
         min-height: calc(100vh - 120px);
     }
 
@@ -322,42 +326,32 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: all .3s ease;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
         border-left: 4px solid var(--primary-color);
-    }
-
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2);
+        overflow: hidden;
     }
 
     .card-custom:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, .14);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .form-control,
     .form-select {
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 11px 12px;
+        padding: 12px 15px;
         background: var(--card-light);
         color: var(--text-dark);
-    }
-
-    body.dark-mode .form-control,
-    body.dark-mode .form-select {
-        background: var(--card-dark);
-        border-color: #374151;
-        color: var(--text-light);
+        transition: var(--transition);
     }
 
     .form-control:focus,
     .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
     }
 
     .btn-primary-custom {
@@ -365,27 +359,41 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
-        transition: all .2s ease;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
         background: var(--primary-dark);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-success-custom {
-        background: var(--secondary-color);
+        background: var(--primary-color);
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 11px 16px;
+        padding: 12px 20px;
         border-radius: 12px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-success-custom:hover {
-        background: #0d9669;
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-warning-custom {
@@ -393,12 +401,18 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 9px 14px;
+        padding: 10px 16px;
         border-radius: 10px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
     }
 
     .btn-warning-custom:hover {
         background: #d97706;
+        transform: translateY(-1px);
     }
 
     .btn-danger-custom {
@@ -406,58 +420,78 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 9px 14px;
+        padding: 10px 16px;
         border-radius: 10px;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
     }
 
     .btn-danger-custom:hover {
         background: #dc2626;
+        transform: translateY(-1px);
     }
 
     .table-custom thead th {
         background: var(--table-header);
         color: #fff;
         border: none;
+        font-weight: 600;
+        padding: 16px 12px;
     }
 
     .table-custom tbody td {
         vertical-align: middle;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .badge-status {
         display: inline-block;
         color: #fff;
-        padding: 6px 10px;
-        border-radius: 999px;
+        padding: 6px 12px;
+        border-radius: 20px;
         font-size: .8rem;
+        font-weight: 600;
     }
 
     .badge-chip {
-        background: #e0ecff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
         border-radius: 8px;
-        padding: 3px 8px;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    body.dark-mode .badge-chip {
+        background: #065f46;
+        color: #a7f3d0;
+        border-color: #10b981;
     }
 
     .stat-card {
         background: var(--card-light);
-        border-radius: 12px;
-        padding: 18px;
+        border-radius: var(--border-radius);
+        padding: 20px;
         text-align: center;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
-        border-left: 4px solid var(--secondary-color);
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
     }
 
-    body.dark-mode .stat-card {
-        background: var(--card-dark);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, .2);
+    .stat-card:hover {
+        transform: translateY(-3px);
     }
 
     .stat-number {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
         font-weight: 700;
         color: var(--primary-color);
+        margin-bottom: 5px;
     }
 
     .stat-label {
@@ -466,29 +500,68 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         font-weight: 500;
     }
 
-    body.dark-mode .stat-label {
-        color: #9ca3af;
+    .alert-custom {
+        border-radius: var(--border-radius);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-left: 4px solid var(--success-dark);
+    }
+
+    .alert-danger {
+        background: var(--danger-light);
+        color: var(--danger-dark);
+        border-left: 4px solid var(--danger-dark);
     }
 
     .fade-in-up {
         animation: fadeInUp .6s ease forwards;
     }
 
+    .modal-header-custom {
+        background: var(--primary-color);
+        color: #fff;
+        border-bottom: none;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(18px)
+            transform: translateY(18px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
-    @media (max-width:768px) {
+    @media (max-width: 768px) {
         .main-content {
-            padding: 20px 0
+            padding: 20px 0;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+
+        .btn-warning-custom,
+        .btn-danger-custom {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .d-flex.gap-2 {
+            flex-direction: column;
         }
     }
     </style>
@@ -499,9 +572,8 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i>Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info">
                     <i class="fas fa-user"></i>
                     <span><?= h($_SESSION['nama']); ?> (User)</span>
@@ -518,10 +590,14 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
             <!-- Alerts -->
             <?php if ($msg_success): ?>
-            <div class="alert alert-success border-0"><?= h($msg_success); ?></div>
+            <div class="alert alert-success alert-custom mb-4">
+                <i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
+            </div>
             <?php endif; ?>
             <?php if ($msg_error): ?>
-            <div class="alert alert-danger border-0"><?= h($msg_error); ?></div>
+            <div class="alert alert-danger alert-custom mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($msg_error); ?>
+            </div>
             <?php endif; ?>
 
             <!-- Stats -->
@@ -533,7 +609,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="stat-card" style="border-left-color:#3b82f6">
+                    <div class="stat-card" style="border-left-color:#10b981">
                         <div class="stat-number"><?= $stat_baru; ?></div>
                         <div class="stat-label">Status Baru</div>
                     </div>
@@ -545,7 +621,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="stat-card" style="border-left-color:#10b981">
+                    <div class="stat-card" style="border-left-color:#3b82f6">
                         <div class="stat-number"><?= $stat_selesai; ?></div>
                         <div class="stat-label">Selesai</div>
                     </div>
@@ -557,20 +633,20 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                 <h5 class="mb-3"><i class="fas fa-plus-circle me-2"></i> Tambah Keluhan</h5>
                 <form method="post" class="row g-3" novalidate>
                     <div class="col-md-4">
-                        <label class="form-label">Nama Lengkap</label>
+                        <label class="form-label fw-semibold">Nama Lengkap</label>
                         <input type="text" name="nama" class="form-control" required placeholder="Nama pasien">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Umur</label>
+                        <label class="form-label fw-semibold">Umur</label>
                         <input type="number" name="umur" class="form-control" required min="1" max="120"
                             placeholder="Umur">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Alamat</label>
+                        <label class="form-label fw-semibold">Alamat</label>
                         <input type="text" name="alamat" class="form-control" required placeholder="Alamat lengkap">
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Keluhan</label>
+                        <label class="form-label fw-semibold">Keluhan</label>
                         <input type="text" name="keluhan" class="form-control" required placeholder="Keluhan medis">
                     </div>
                     <div class="col-12 d-flex gap-2">
@@ -585,9 +661,10 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
             </div>
 
             <!-- Filter & Search -->
-            <div class="card-custom p-3 mb-3 fade-in-up">
-                <form class="row g-2" method="get">
+            <div class="card-custom p-4 mb-4 fade-in-up">
+                <form class="row g-3" method="get">
                     <div class="col-md-6">
+                        <label class="form-label fw-semibold">Cari Keluhan</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i
                                     class="fas fa-search text-muted"></i></span>
@@ -595,7 +672,8 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                                 placeholder="Cari nama / alamat / keluhan" value="<?= h($q); ?>">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Filter Status</label>
                         <select name="status" class="form-select">
                             <option value="">— Semua Status —</option>
                             <option value="baru" <?= $fstatus==='baru'?'selected':''; ?>>Baru</option>
@@ -603,8 +681,10 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                             <option value="selesai" <?= $fstatus==='selesai'?'selected':''; ?>>Selesai</option>
                         </select>
                     </div>
-                    <div class="col-md-3 d-grid">
-                        <button class="btn btn-primary-custom"><i class="fas fa-filter me-1"></i> Terapkan</button>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary-custom w-100">
+                            <i class="fas fa-filter me-1"></i> Terapkan
+                        </button>
                     </div>
                 </form>
             </div>
@@ -612,7 +692,9 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
             <!-- Tabel Keluhan -->
             <div class="card-custom p-4 fade-in-up">
                 <?php if ($total === 0): ?>
-                <div class="alert alert-info border-0"><i class="fas fa-info-circle me-2"></i>Tidak ada data.</div>
+                <div class="alert alert-info alert-custom">
+                    <i class="fas fa-info-circle me-2"></i>Tidak ada data keluhan yang ditemukan.
+                </div>
                 <?php else: ?>
                 <div class="table-responsive">
                     <table class="table table-custom align-middle">
@@ -631,7 +713,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                         <tbody>
                             <?php $no = $offset + 1; foreach ($rows as $d): ?>
                             <tr>
-                                <td><?= $no++; ?></td>
+                                <td class="fw-semibold"><?= $no++; ?></td>
                                 <td class="fw-semibold"><?= h($d['nama']); ?></td>
                                 <td><span class="badge-chip"><?= (int)$d['umur']; ?> th</span></td>
                                 <td><?= h($d['alamat']); ?></td>
@@ -660,7 +742,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
                 <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                <nav class="mt-3 d-flex justify-content-center">
+                <nav class="mt-4 d-flex justify-content-center">
                     <ul class="pagination">
                         <?php
                     $build = function($p){
@@ -690,7 +772,7 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                                 href="<?= $page>=$total_pages?'#':$build($next); ?>">&raquo;</a></li>
                     </ul>
                 </nav>
-                <p class="text-center small text-muted mt-1">
+                <p class="text-center small text-muted mt-2">
                     Menampilkan <?= min($per_page, max(0, $total - $offset)); ?> dari <?= $total; ?> data.
                 </p>
                 <?php endif; ?>
@@ -705,31 +787,31 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="post">
-                    <div class="modal-header" style="background:#3b82f6;color:#fff;">
+                    <div class="modal-header modal-header-custom">
                         <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Keluhan</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="id" id="f_id">
                         <div class="mb-3">
-                            <label class="form-label">Nama Lengkap</label>
+                            <label class="form-label fw-semibold">Nama Lengkap</label>
                             <input type="text" name="nama" id="f_nama" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Umur</label>
+                            <label class="form-label fw-semibold">Umur</label>
                             <input type="number" name="umur" id="f_umur" class="form-control" min="1" max="120"
                                 required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Alamat</label>
+                            <label class="form-label fw-semibold">Alamat</label>
                             <input type="text" name="alamat" id="f_alamat" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Keluhan</label>
+                            <label class="form-label fw-semibold">Keluhan</label>
                             <input type="text" name="keluhan" id="f_keluhan" class="form-control" required>
                         </div>
                         <div class="mb-1">
-                            <label class="form-label">Status</label>
+                            <label class="form-label fw-semibold">Status</label>
                             <select name="status" id="f_status" class="form-select">
                                 <option value="baru">Baru</option>
                                 <option value="proses">Proses</option>
@@ -739,10 +821,12 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                         <small class="text-muted">Ubah status untuk menandai progress penanganan.</small>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" name="update" class="btn btn-primary-custom"><i
-                                class="fas fa-save me-1"></i>Simpan</button>
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i
-                                class="fas fa-times me-1"></i>Batal</button>
+                        <button type="submit" name="update" class="btn btn-primary-custom">
+                            <i class="fas fa-save me-1"></i>Simpan
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Batal
+                        </button>
                     </div>
                 </form>
             </div>
@@ -751,20 +835,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Dark mode toggle
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
     // Prefill modal edit
     const editModal = document.getElementById('editModal');
     editModal?.addEventListener('show.bs.modal', (ev) => {

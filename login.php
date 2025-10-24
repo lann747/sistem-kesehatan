@@ -1,57 +1,19 @@
 <?php
-// ---- Session & Security Headers ----
-// Set cookie session yang lebih aman (panggil sebelum session_start)
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/',
-    'domain'   => '',
-    'secure'   => isset($_SERVER['HTTPS']),
-    'httponly' => true,
-    'samesite' => 'Lax',
-]);
+
 session_start();
 
 require_once __DIR__ . '/config/db.php';
 
-// Header keamanan ringan
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: strict-origin-when-cross-origin');
-header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
-
-// Jika sudah login, arahkan langsung ke dashboard
 if (!empty($_SESSION['role'])) {
     if ($_SESSION['role'] === 'admin') {
-        header('Location: admin/index.php'); exit;
+        header('Location: admin/index.php'); 
+        exit;
     } elseif ($_SESSION['role'] === 'user') {
-        header('Location: user/index.php'); exit;
+        header('Location: user/index.php'); 
+        exit;
     }
 }
 
-// ---- Rate limiting sederhana ----
-if (!isset($_SESSION['login_attempts'])) {
-    $_SESSION['login_attempts'] = 0;
-    $_SESSION['login_last_attempt'] = 0;
-}
-$LOCK_WINDOW_SEC = 300;   // 5 menit
-$MAX_ATTEMPTS    = 5;
-
-$now = time();
-$locked_until = 0;
-if ($_SESSION['login_attempts'] >= $MAX_ATTEMPTS) {
-    $locked_until = $_SESSION['login_last_attempt'] + $LOCK_WINDOW_SEC;
-    if ($now < $locked_until) {
-        $remaining = $locked_until - $now;
-        $error = "Terlalu banyak percobaan. Coba lagi dalam " . ceil($remaining / 60) . " menit.";
-    } else {
-        // Reset setelah masa kunci
-        $_SESSION['login_attempts'] = 0;
-    }
-}
-
-$error = $error ?? '';
-
-// ---- CSRF token ----
 if (empty($_SESSION['csrf_login'])) {
     $_SESSION['csrf_login'] = bin2hex(random_bytes(32));
 }
@@ -61,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     if (!hash_equals($_SESSION['csrf_login'], $post_csrf)) {
         $error = "Sesi formulir kadaluarsa atau tidak valid. Muat ulang halaman.";
     } else {
-        // Ambil & validasi input
         $email = trim($_POST['email'] ?? '');
         $password = (string)($_POST['password'] ?? '');
 
@@ -70,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Format email tidak valid.";
         } else {
-            // ---- Query aman dengan prepared statement ----
             $stmt = $conn->prepare("SELECT id, nama, email, password, role FROM users WHERE email = ? LIMIT 1");
             if ($stmt) {
                 $stmt->bind_param('s', $email);
@@ -82,32 +42,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
                     $dbHash = $user['password'] ?? '';
 
-                    // ---- Kompatibilitas MD5 lama + dukungan password_hash baru ----
                     $ok = false;
                     $isModernHash = str_starts_with($dbHash, '$2y$') || str_starts_with($dbHash, '$argon2');
 
                     if ($isModernHash) {
-                        // Verifikasi password modern
                         $ok = password_verify($password, $dbHash);
                     } else {
-                        // Verifikasi MD5 lama (sesuai struktur DB saat ini)
                         $ok = (md5($password) === $dbHash);
                     }
 
                     if ($ok) {
-                        // Regenerate session ID untuk cegah session fixation
                         session_regenerate_id(true);
-
-                        // Set session data minimal
                         $_SESSION['id']   = (int)$user['id'];
                         $_SESSION['nama'] = $user['nama'];
                         $_SESSION['role'] = $user['role'];
 
-                        // Reset rate limit counter
                         $_SESSION['login_attempts'] = 0;
 
-                        // ---- (Opsional) Migrasi ke hash modern otomatis ----
-                        // Jika masih MD5, upgrade ke password_hash (bcrypt)
                         if (!$isModernHash) {
                             $newHash = password_hash($password, PASSWORD_BCRYPT);
                             $up = $conn->prepare("UPDATE users SET password = ? WHERE id = ? LIMIT 1");
@@ -117,22 +68,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                                 $up->close();
                             }
                         }
-
-                        // Arahkan sesuai role
+                        
                         if ($user['role'] === 'admin') {
-                            header('Location: admin/index.php'); exit;
+                            header('Location: admin/index.php'); 
+                            exit;
                         } else {
-                            header('Location: user/index.php'); exit;
+                            header('Location: user/index.php'); 
+                            exit;
                         }
                     } else {
                         $error = "Email atau password salah.";
-                        $_SESSION['login_attempts']++;
-                        $_SESSION['login_last_attempt'] = time();
                     }
                 } else {
                     $error = "Email tidak ditemukan.";
-                    $_SESSION['login_attempts']++;
-                    $_SESSION['login_last_attempt'] = time();
                 }
                 $stmt->close();
             } else {
@@ -148,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login - Sistem Informasi Kesehatan</title>
+    <title>Login - Rafflesia Sehat</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -159,18 +107,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
+        --primary-color: #16a34a;
+        --primary-light: #22c55e;
+        --primary-dark: #15803d;
         --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
-        --dark-bg: #0f172a;
+        --light-bg: #f0fdf4;
         --text-light: #f8fafc;
-        --text-dark: #1e293b;
         --card-light: #ffffff;
+        --gradient: linear-gradient(135deg, #16a34a, #22c55e);
+        --dark-bg: #0f172a;
+        --text-dark: #1e293b;
         --card-dark: #1e293b;
-        --gradient: linear-gradient(135deg, #3b82f6, #60a5fa);
-        --gradient-dark: linear-gradient(135deg, #1e293b, #334155)
+        --sidebar-bg: #1e293b;
+        --navbar-bg: #16a34a;
+        --shadow-light: 0 10px 25px rgba(0, 0, 0, 0.05);
+        --shadow-medium: 0 15px 35px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
 
     body {
@@ -181,91 +133,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         align-items: center;
         justify-content: center;
         color: var(--text-light);
-        transition: all .3s ease;
-        padding: 20px
+        transition: all 0.3s ease;
+        padding: 20px;
+        position: relative;
+        overflow-x: hidden;
     }
 
-    body.dark-mode {
-        background: var(--gradient-dark)
+    body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,192C1248,192,1344,128,1392,96L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') center/cover no-repeat;
+        z-index: -1;
     }
 
     .login-container {
         width: 100%;
         max-width: 450px;
-        animation: fadeInUp .8s ease
+        animation: fadeInUp 0.8s ease;
     }
 
     .login-card {
         background: var(--card-light);
         border: none;
         border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, .1);
+        box-shadow: var(--shadow-heavy);
         overflow: hidden;
-        transition: all .3s ease
-    }
-
-    body.dark-mode .login-card {
-        background: var(--card-dark);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, .3)
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
     }
 
     .login-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, .15)
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     }
 
     .card-header {
         background: var(--primary-color);
         color: #fff;
         text-align: center;
-        padding: 30px 20px;
-        border-bottom: none
+        padding: 40px 20px;
+        border-bottom: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .card-header>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        display: block;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
     }
 
     .card-body {
         padding: 40px 30px;
-        color: var(--text-dark)
-    }
-
-    body.dark-mode .card-body {
-        color: var(--text-light)
-    }
-
-    .login-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        display: block
+        color: var(--text-dark);
     }
 
     .form-label {
         font-weight: 600;
         color: var(--text-dark);
-        margin-bottom: 8px
-    }
-
-    body.dark-mode .form-label {
-        color: var(--text-light)
+        margin-bottom: 8px;
+        font-size: 0.95rem;
     }
 
     .form-control {
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 12px 15px;
-        font-size: .95rem;
-        transition: all .3s ease;
+        padding: 14px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
         background: var(--card-light);
-        color: var(--text-dark)
-    }
-
-    body.dark-mode .form-control {
-        background: var(--card-dark);
-        border-color: #374151;
-        color: var(--text-light)
+        color: var(--text-dark);
     }
 
     .form-control:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .1)
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    }
+
+    .input-group {
+        transition: transform 0.3s ease;
+    }
+
+    .input-group:focus-within {
+        transform: translateY(-2px);
+    }
+
+    .input-group-text {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-right: none;
+        transition: all 0.3s ease;
+    }
+
+    .input-group:focus-within .input-group-text {
+        border-color: var(--primary-color);
+        background: rgba(22, 163, 74, 0.05);
+        color: var(--primary-color);
+    }
+
+    .form-control.border-start-0 {
+        border-left: none;
     }
 
     .btn-login {
@@ -273,64 +261,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         border: none;
         color: #fff;
         font-weight: 600;
-        padding: 12px;
+        padding: 14px;
         border-radius: 12px;
-        transition: all .3s ease;
+        transition: all 0.3s ease;
         width: 100%;
-        font-size: 1rem
+        font-size: 1rem;
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
+        position: relative;
+        overflow: hidden;
     }
 
     .btn-login:hover {
         background: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, .2)
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
     }
 
     .btn-login:active {
-        transform: translateY(0)
+        transform: translateY(-1px);
+    }
+
+    .btn-login::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+    }
+
+    .btn-login:focus:not(:active)::after {
+        animation: ripple 1s ease-out;
     }
 
     .alert-custom {
         border-radius: 12px;
         border: none;
-        padding: 12px 15px;
-        font-weight: 500
+        padding: 14px 16px;
+        font-weight: 500;
+        box-shadow: var(--shadow-light);
     }
 
     .alert-danger {
         background: #fee2e2;
-        color: #dc2626
-    }
-
-    body.dark-mode .alert-danger {
-        background: #7f1d1d;
-        color: #fecaca
+        color: #dc2626;
+        border-left: 4px solid #dc2626;
     }
 
     .links-section {
         margin-top: 25px;
-        text-align: center
+        text-align: center;
     }
 
     .link-text {
         color: var(--text-dark);
-        font-size: .9rem
-    }
-
-    body.dark-mode .link-text {
-        color: var(--text-light)
+        font-size: 0.9rem;
     }
 
     .link-primary {
         color: var(--primary-color);
         font-weight: 600;
         text-decoration: none;
-        transition: color .3s ease
+        transition: color 0.3s ease;
+        position: relative;
+    }
+
+    .link-primary::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
     }
 
     .link-primary:hover {
         color: var(--primary-dark);
-        text-decoration: underline
+        text-decoration: none;
+    }
+
+    .link-primary:hover::after {
+        width: 100%;
     }
 
     .back-link {
@@ -338,70 +356,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         align-items: center;
         gap: 5px;
         color: #6b7280;
-        transition: color .3s ease
-    }
-
-    body.dark-mode .back-link {
-        color: #9ca3af
+        transition: color 0.3s ease;
+        text-decoration: none;
     }
 
     .back-link:hover {
-        color: var(--primary-color)
-    }
-
-    .theme-toggle {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, .2);
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        cursor: pointer;
-        transition: all .3s ease;
-        backdrop-filter: blur(10px)
-    }
-
-    .theme-toggle:hover {
-        background: rgba(255, 255, 255, .3);
-        transform: rotate(20deg)
+        color: var(--primary-color);
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(30px)
+            transform: translateY(30px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
-    @media (max-width:576px) {
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+
+        100% {
+            transform: scale(20, 20);
+            opacity: 0;
+        }
+    }
+
+    @media (max-width: 576px) {
         .card-body {
-            padding: 30px 20px
+            padding: 30px 20px;
         }
 
         .login-container {
-            max-width: 100%
+            max-width: 100%;
+        }
+
+        .card-header {
+            padding: 30px 20px;
+        }
+
+        .login-icon {
+            font-size: 3rem;
+        }
+
+        body {
+            padding: 15px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .card-body {
+            padding: 25px 15px;
+        }
+
+        .card-header {
+            padding: 25px 15px;
+        }
+
+        .form-control {
+            padding: 12px 15px;
         }
     }
     </style>
 </head>
 
 <body>
-    <!-- Theme Toggle -->
-    <button id="themeToggle" class="theme-toggle" title="Ganti Tema" aria-label="Ganti tema">
-        <i class="fas fa-moon" aria-hidden="true"></i>
-    </button>
-
     <div class="login-container">
         <div class="login-card">
             <div class="card-header">
@@ -421,19 +446,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                 <form method="POST" action="" autocomplete="off" novalidate>
                     <input type="hidden" name="csrf"
                         value="<?= htmlspecialchars($_SESSION['csrf_login'], ENT_QUOTES, 'UTF-8'); ?>">
+
                     <div class="mb-4">
-                        <label class="form-label" for="email">Email</label>
+                        <label class="form-label text-dark" for="email">Email</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">
                                 <i class="fas fa-envelope text-muted" aria-hidden="true"></i>
                             </span>
                             <input type="email" id="email" name="email" class="form-control border-start-0"
-                                placeholder="Masukkan email Anda" required inputmode="email" />
+                                placeholder="Masukkan email Anda" required inputmode="email"
+                                value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : '' ?>" />
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label" for="password">Password</label>
+                        <label class="form-label text-dark" for="password">Password</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">
                                 <i class="fas fa-key text-muted" aria-hidden="true"></i>
@@ -452,7 +479,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                 <div class="links-section">
                     <p class="link-text mb-3">
                         Belum punya akun?
-                        <a href="register.php" class="link-primary" rel="nofollow">Daftar Sekarang</a>
+                        <a href="register.php" class="link-primary ms-1" rel="nofollow">Daftar Sekarang</a>
                     </p>
 
                     <a href="index.php" class="back-link">
@@ -464,36 +491,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         </div>
     </div>
 
-    <!-- Vendor JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 
     <script>
-    // Dark mode toggle + simpan preferensi
     (function() {
-        const body = document.body;
-        const btn = document.getElementById('themeToggle');
-        const saved = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // Efek interaktif pada input fields
+        document.querySelectorAll('.form-control').forEach(el => {
+            el.addEventListener('focus', function() {
+                this.closest('.input-group').style.transform = 'translateY(-2px)';
+            });
 
-        const startDark = saved ? (saved === 'dark') : prefersDark;
-        if (startDark) {
-            body.classList.add('dark-mode');
-            btn.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i>';
+            el.addEventListener('blur', function() {
+                this.closest('.input-group').style.transform = 'translateY(0)';
+            });
+        });
+
+        // Efek ripple pada tombol login
+        document.querySelector('.btn-login').addEventListener('click', function(e) {
+            if (this.form.checkValidity()) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const ripple = document.createElement('span');
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.width = '5px';
+                ripple.style.height = '5px';
+
+                this.appendChild(ripple);
+
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
+        });
+
+        // Validasi form real-time
+        const form = document.querySelector('form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        function validateForm() {
+            let isValid = true;
+
+            // Validasi email
+            if (!emailInput.value || !emailInput.validity.valid) {
+                isValid = false;
+            }
+
+            // Validasi password
+            if (!passwordInput.value || passwordInput.value.length < 6) {
+                isValid = false;
+            }
+
+            return isValid;
         }
 
-        btn.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const isDark = body.classList.contains('dark-mode');
-            btn.innerHTML = isDark ? '<i class="fas fa-sun" aria-hidden="true"></i>' :
-                '<i class="fas fa-moon" aria-hidden="true"></i>';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        });
+        // Update status tombol berdasarkan validasi
+        function updateButtonState() {
+            const button = document.querySelector('.btn-login');
+            if (validateForm()) {
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+            } else {
+                button.style.opacity = '0.7';
+                button.style.cursor = 'not-allowed';
+            }
+        }
 
-        // Animasi fokus input
-        document.querySelectorAll('.form-control').forEach(el => {
-            el.addEventListener('focus', () => el.closest('.input-group').style.transform = 'scale(1.02)');
-            el.addEventListener('blur', () => el.closest('.input-group').style.transform = 'scale(1)');
-        });
+        emailInput.addEventListener('input', updateButtonState);
+        passwordInput.addEventListener('input', updateButtonState);
+
+        // Inisialisasi status tombol
+        updateButtonState();
     })();
     </script>
 </body>

@@ -1,15 +1,7 @@
 <?php
-// ---------- Bootstrap keamanan ----------
-session_set_cookie_params([
-    'lifetime' => 0, 'path' => '/', 'domain' => '',
-    'secure' => isset($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax',
-]);
+
 session_start();
 require_once __DIR__ . '/../config/db.php';
-
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: strict-origin-when-cross-origin');
 
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php'); exit;
@@ -161,42 +153,40 @@ if (!empty($data['created_at'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     :root {
-        --primary-color: #3b82f6;
-        --primary-light: #60a5fa;
-        --primary-dark: #1d4ed8;
+        --primary-color: #16a34a;
+        --primary-light: #22c55e;
+        --primary-dark: #15803d;
         --secondary-color: #10b981;
-        --light-bg: #f0f9ff;
+        --light-bg: #f0fdf4;
         --dark-bg: #0f172a;
         --text-light: #f8fafc;
         --text-dark: #1e293b;
         --card-light: #ffffff;
         --card-dark: #1e293b;
-        --navbar-bg: #3b82f6
+        --navbar-bg: #10b981;
+        --success-light: #d1fae5;
+        --success-dark: #065f46;
+        --danger-light: #fee2e2;
+        --danger-dark: #dc2626;
+        --border-radius: 12px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
     }
 
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all .3s ease;
-        min-height: 100vh
-    }
-
-    body.dark-mode {
-        background-color: var(--dark-bg);
-        color: var(--text-light)
+        transition: var(--transition);
+        min-height: 100vh;
+        line-height: 1.6;
     }
 
     .navbar {
         background: var(--navbar-bg);
         border-bottom: 3px solid var(--primary-dark);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, .1);
-        padding: 1rem 0
-    }
-
-    body.dark-mode .navbar {
-        background: var(--dark-bg);
-        border-bottom-color: var(--primary-color)
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 1rem 0;
     }
 
     .navbar-brand {
@@ -205,7 +195,7 @@ if (!empty($data['created_at'])) {
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 1.3rem
+        font-size: 1.3rem;
     }
 
     .user-info {
@@ -213,32 +203,33 @@ if (!empty($data['created_at'])) {
         font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 10px
+        gap: 10px;
     }
 
     .btn-logout {
-        background: rgba(255, 255, 255, .2);
-        border: 1px solid rgba(255, 255, 255, .3);
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         color: #fff;
         font-weight: 500;
-        padding: 6px 15px;
+        padding: 8px 18px;
         border-radius: 8px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px
+        gap: 5px;
     }
 
     .btn-logout:hover {
-        background: rgba(255, 255, 255, .3);
+        background: rgba(255, 255, 255, 0.3);
         color: #fff;
-        transform: translateY(-1px)
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .main-content {
-        padding: 30px 0;
-        min-height: calc(100vh - 120px)
+        padding: 40px 0;
+        min-height: calc(100vh - 120px);
     }
 
     .page-title {
@@ -247,35 +238,27 @@ if (!empty($data['created_at'])) {
         margin-bottom: 10px;
         display: flex;
         align-items: center;
-        gap: 10px
+        gap: 10px;
     }
 
     .page-subtitle {
         color: #6b7280;
-        margin-bottom: 30px
-    }
-
-    body.dark-mode .page-subtitle {
-        color: #9ca3af
+        margin-bottom: 30px;
     }
 
     .card-custom {
         background: var(--card-light);
         border: none;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        transition: all .3s ease;
-        border-left: 4px solid var(--primary-color)
-    }
-
-    body.dark-mode .card-custom {
-        background: var(--card-dark);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .2)
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
+        border-left: 4px solid var(--primary-color);
+        overflow: hidden;
     }
 
     .card-custom:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, .15)
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
     .form-control {
@@ -283,30 +266,20 @@ if (!empty($data['created_at'])) {
         border-radius: 10px;
         padding: 12px 15px;
         font-size: .95rem;
-        transition: all .3s ease;
+        transition: var(--transition);
         background: var(--card-light);
-        color: var(--text-dark)
-    }
-
-    body.dark-mode .form-control {
-        background: var(--card-dark);
-        border-color: #374151;
-        color: var(--text-light)
+        color: var(--text-dark);
     }
 
     .form-control:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .1)
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
     .form-label {
         font-weight: 600;
         color: var(--text-dark);
-        margin-bottom: 8px
-    }
-
-    body.dark-mode .form-label {
-        color: var(--text-light)
+        margin-bottom: 8px;
     }
 
     .btn-primary-custom {
@@ -314,31 +287,41 @@ if (!empty($data['created_at'])) {
         border: none;
         color: #fff;
         font-weight: 500;
-        padding: 10px 20px;
+        padding: 12px 24px;
         border-radius: 10px;
-        transition: all .3s ease
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-primary-custom:hover {
         background: var(--primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, .2)
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-success-custom {
-        background: var(--secondary-color);
+        background: var(--primary-color);
         border: none;
         color: #fff;
         font-weight: 500;
-        padding: 10px 20px;
+        padding: 12px 24px;
         border-radius: 10px;
-        transition: all .3s ease
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .btn-success-custom:hover {
-        background: #0d9669;
+        background: var(--primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, .2)
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
     }
 
     .btn-secondary-custom {
@@ -346,138 +329,179 @@ if (!empty($data['created_at'])) {
         border: none;
         color: #fff;
         font-weight: 500;
-        padding: 8px 20px;
+        padding: 10px 20px;
         border-radius: 10px;
-        transition: all .3s ease;
+        transition: var(--transition);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px
+        gap: 5px;
     }
 
     .btn-secondary-custom:hover {
         background: #4b5563;
         color: #fff;
-        transform: translateY(-1px)
+        transform: translateY(-1px);
     }
 
     .alert-custom {
-        border-radius: 12px;
+        border-radius: var(--border-radius);
         border: none;
-        padding: 12px 15px;
-        font-weight: 500
+        padding: 15px 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .alert-success {
-        background: #d1fae5;
-        color: #065f46
+        background: var(--success-light);
+        color: var(--success-dark);
+        border-left: 4px solid var(--success-dark);
     }
 
     .alert-danger {
-        background: #fee2e2;
-        color: #dc2626
-    }
-
-    body.dark-mode .alert-success {
-        background: #064e3b;
-        color: #a7f3d0
-    }
-
-    body.dark-mode .alert-danger {
-        background: #7f1d1d;
-        color: #fecaca
+        background: var(--danger-light);
+        color: var(--danger-dark);
+        border-left: 4px solid var(--danger-dark);
     }
 
     .profile-header {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
         color: #fff;
-        padding: 30px;
-        border-radius: 15px;
+        padding: 40px 30px;
+        border-radius: var(--border-radius);
         margin-bottom: 30px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, .1)
+        box-shadow: var(--box-shadow);
+        position: relative;
+        overflow: hidden;
     }
 
-    body.dark-mode .profile-header {
-        background: linear-gradient(135deg, var(--primary-dark), #1e293b)
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
     }
 
     .profile-avatar {
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, .2);
+        width: 90px;
+        height: 90px;
+        background: rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        margin-bottom: 15px
+        font-size: 2.2rem;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     .section-title {
         font-weight: 600;
         color: var(--primary-color);
         margin-bottom: 20px;
-        padding-bottom: 10px;
+        padding-bottom: 12px;
         border-bottom: 2px solid #e5e7eb;
         display: flex;
         align-items: center;
-        gap: 10px
+        gap: 10px;
     }
 
-    body.dark-mode .section-title {
-        border-bottom-color: #374151
+    .info-item {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .badge-custom {
+        background: var(--primary-light);
+        color: var(--success-dark);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(20px)
+            transform: translateY(20px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0)
+            transform: translateY(0);
         }
     }
 
     .fade-in-up {
-        animation: fadeInUp .6s ease forwards
+        animation: fadeInUp 0.6s ease forwards;
     }
 
-    @media (max-width:768px) {
+    @media (max-width: 768px) {
         .main-content {
-            padding: 20px 0
+            padding: 20px 0;
         }
 
         .profile-header {
-            padding: 20px;
-            text-align: center
+            padding: 25px 20px;
+            text-align: center;
         }
 
         .profile-avatar {
-            margin: 0 auto 15px
+            margin: 0 auto 15px;
+        }
+
+        .btn-primary-custom,
+        .btn-success-custom {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .d-flex.gap-2 {
+            flex-direction: column;
         }
     }
     </style>
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Sistem Kesehatan</a>
+            <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
             <div class="d-flex align-items-center">
-                <button id="themeToggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-moon"></i></button>
                 <div class="user-info"><i class="fas fa-user"></i><span><?= h($_SESSION['nama']); ?></span></div>
                 <a href="../logout.php" class="btn-logout ms-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Profile Header -->
             <div class="profile-header fade-in-up">
                 <div class="row align-items-center">
                     <div class="col-md-8">
@@ -487,7 +511,9 @@ if (!empty($data['created_at'])) {
                         </p>
                         <p class="mb-0 opacity-75"><i class="fas fa-user-tag me-2"></i>Pengguna</p>
                     </div>
-                    <div class="col-md-4 text-end"><i class="fas fa-user-circle fa-4x opacity-75"></i></div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-user-circle fa-5x opacity-75"></i>
+                    </div>
                 </div>
             </div>
 
@@ -501,7 +527,8 @@ if (!empty($data['created_at'])) {
                         <div
                             class="alert alert-<?= $flash['type']==='success'?'success':'danger'; ?> alert-custom mb-4">
                             <i
-                                class="fas <?= $flash['type']==='success'?'fa-check-circle':'fa-exclamation-circle'; ?> me-2"></i><?= h($flash['msg']); ?>
+                                class="fas <?= $flash['type']==='success'?'fa-check-circle':'fa-exclamation-circle'; ?> me-2"></i>
+                            <?= h($flash['msg']); ?>
                         </div>
                         <?php endif; ?>
 
@@ -530,10 +557,12 @@ if (!empty($data['created_at'])) {
                                     placeholder="Masukkan alamat lengkap"><?= h($data['alamat'] ?? ''); ?></textarea>
                             </div>
                             <div class="d-flex gap-2">
-                                <button type="submit" name="update" class="btn-success-custom"><i
-                                        class="fas fa-save me-2"></i>Simpan Perubahan</button>
-                                <a href="index.php" class="btn-secondary-custom"><i
-                                        class="fas fa-arrow-left me-2"></i>Kembali</a>
+                                <button type="submit" name="update" class="btn-success-custom">
+                                    <i class="fas fa-save me-2"></i>Simpan Perubahan
+                                </button>
+                                <a href="index.php" class="btn-secondary-custom">
+                                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                                </a>
                             </div>
                         </form>
                     </div>
@@ -548,7 +577,8 @@ if (!empty($data['created_at'])) {
                         <div
                             class="alert alert-<?= $pwd_flash['type']==='success'?'success':'danger'; ?> alert-custom mb-4">
                             <i
-                                class="fas <?= $pwd_flash['type']==='success'?'fa-check-circle':'fa-exclamation-circle'; ?> me-2"></i><?= h($pwd_flash['msg']); ?>
+                                class="fas <?= $pwd_flash['type']==='success'?'fa-check-circle':'fa-exclamation-circle'; ?> me-2"></i>
+                            <?= h($pwd_flash['msg']); ?>
                         </div>
                         <?php endif; ?>
 
@@ -569,25 +599,26 @@ if (!empty($data['created_at'])) {
                                 <input type="password" name="konfirmasi_password" class="form-control"
                                     placeholder="Ulangi password baru" required>
                             </div>
-                            <button type="submit" name="ubah_password" class="btn-primary-custom w-100"><i
-                                    class="fas fa-key me-2"></i>Ubah Password</button>
+                            <button type="submit" name="ubah_password" class="btn-primary-custom w-100">
+                                <i class="fas fa-key me-2"></i>Ubah Password
+                            </button>
                         </form>
                     </div>
 
                     <!-- Info Akun -->
                     <div class="card-custom p-4 mt-4 fade-in-up">
                         <h4 class="section-title"><i class="fas fa-info-circle"></i> Info Akun</h4>
-                        <div class="mb-3">
-                            <small class="text-muted">ID Pengguna</small>
-                            <p class="mb-0 fw-semibold">#<?= (int)($data['id'] ?? 0); ?></p>
+                        <div class="info-item">
+                            <div class="info-label">ID Pengguna</div>
+                            <div class="info-value">#<?= (int)($data['id'] ?? 0); ?></div>
                         </div>
-                        <div class="mb-3">
-                            <small class="text-muted">Role</small>
-                            <p class="mb-0 fw-semibold"><span class="badge bg-primary">User</span></p>
+                        <div class="info-item">
+                            <div class="info-label">Role</div>
+                            <div class="info-value"><span class="badge-custom">User</span></div>
                         </div>
-                        <div class="mb-0">
-                            <small class="text-muted">Bergabung Sejak</small>
-                            <p class="mb-0 fw-semibold"><?= h($created_at_display); ?></p>
+                        <div class="info-item">
+                            <div class="info-label">Bergabung Sejak</div>
+                            <div class="info-value"><?= h($created_at_display); ?></div>
                         </div>
                     </div>
                 </div>
@@ -596,20 +627,6 @@ if (!empty($data['created_at'])) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script>
-    const toggleBtn = document.getElementById('themeToggle'),
-        body = document.body;
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    toggleBtn.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        const isDark = body.classList.contains('dark-mode');
-        toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-    </script>
 </body>
 
 </html>

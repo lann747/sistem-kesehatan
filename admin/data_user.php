@@ -1,126 +1,181 @@
 <?php
 session_start();
-require_once __DIR__ . '/../config/db.php';
+include '../config/db.php';
 
-// Hanya admin yang boleh masuk
-if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header('Location: ../login.php'); 
+// Hanya admin
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php');
     exit;
 }
 
-// Helper escape HTML
+// Helper
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// CSRF token halaman admin
-if (empty($_SESSION['csrf_admin'])) {
-    $_SESSION['csrf_admin'] = bin2hex(random_bytes(32));
+// CSRF
+if (empty($_SESSION['csrf_user'])) {
+    $_SESSION['csrf_user'] = bin2hex(random_bytes(32));
 }
-$csrf = $_SESSION['csrf_admin'];
+$csrf = $_SESSION['csrf_user'];
 
-// ---------- Handler: Tambah ----------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
+$flash = ['success'=>null,'error'=>null];
+
+// Cek jumlah admin (dipakai untuk proteksi admin terakhir)
+function count_admins($conn){
+    $q = mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='admin'");
+    $r = mysqli_fetch_assoc($q);
+    return (int)$r['c'];
+}
+
+// Tambah user
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
-        http_response_code(400);
-        die('Invalid CSRF token.');
-    }
-    $nama     = trim($_POST['nama'] ?? '');
-    $spesialis= trim($_POST['spesialis'] ?? '');
-    $no_hp    = trim($_POST['no_hp'] ?? '');
-    $alamat   = trim($_POST['alamat'] ?? '');
-
-    // Validasi sederhana
-    if ($nama === '' || $spesialis === '' || $no_hp === '' || $alamat === '') {
-        $flash_err = 'Semua kolom wajib diisi.';
-    } elseif (!preg_match('/^[0-9+\-\s]{8,20}$/', $no_hp)) {
-        $flash_err = 'Format No. HP tidak valid.';
+        $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
     } else {
-        $stmt = $conn->prepare("INSERT INTO dokter (nama, spesialis, no_hp, alamat) VALUES (?, ?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param('ssss', $nama, $spesialis, $no_hp, $alamat);
-            $stmt->execute();
-            $stmt->close();
-            header('Location: data_dokter.php'); 
-            exit;
+        $nama     = trim($_POST['nama'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $no_hp    = trim($_POST['no_hp'] ?? '');
+        $alamat   = trim($_POST['alamat'] ?? '');
+        $role     = ($_POST['role'] ?? 'user') === 'admin' ? 'admin' : 'user';
+        $password = $_POST['password'] ?? '';
+
+        if ($nama==='' || $email==='' || $password==='') {
+            $flash['error'] = 'Nama, email, dan password wajib diisi.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $flash['error'] = 'Format email tidak valid.';
+        } elseif (strlen($password) < 6) {
+            $flash['error'] = 'Password minimal 6 karakter.';
         } else {
-            $flash_err = 'Gagal menambah data.';
+            // cek email unik
+            $cek = mysqli_prepare($conn, "SELECT id FROM users WHERE email=?");
+            mysqli_stmt_bind_param($cek, "s", $email);
+            mysqli_stmt_execute($cek);
+            mysqli_stmt_store_result($cek);
+            if (mysqli_stmt_num_rows($cek) > 0) {
+                $flash['error'] = 'Email sudah terdaftar.';
+            } else {
+                $hash = md5($password); // kompatibel login.php
+                $stmt = mysqli_prepare($conn, "INSERT INTO users (nama, email, password, no_hp, alamat, role) VALUES (?,?,?,?,?,?)");
+                mysqli_stmt_bind_param($stmt, "ssssss", $nama, $email, $hash, $no_hp, $alamat, $role);
+                if (mysqli_stmt_execute($stmt)) {
+                    $flash['success'] = 'Pengguna berhasil ditambahkan.';
+                } else {
+                    $flash['error'] = 'Gagal menambahkan pengguna.';
+                }
+                mysqli_stmt_close($stmt);
+            }
+            mysqli_stmt_close($cek);
         }
     }
 }
 
-// ---------- Handler: Update ----------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
+// Update user
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
-        http_response_code(400);
-        die('Invalid CSRF token.');
-    }
-    $id       = (int)($_POST['id'] ?? 0);
-    $nama     = trim($_POST['nama'] ?? '');
-    $spesialis= trim($_POST['spesialis'] ?? '');
-    $no_hp    = trim($_POST['no_hp'] ?? '');
-    $alamat   = trim($_POST['alamat'] ?? '');
-
-    if ($id <= 0) {
-        $flash_err = 'ID tidak valid.';
-    } elseif ($nama === '' || $spesialis === '' || $no_hp === '' || $alamat === '') {
-        $flash_err = 'Semua kolom wajib diisi.';
-    } elseif (!preg_match('/^[0-9+\-\s]{8,20}$/', $no_hp)) {
-        $flash_err = 'Format No. HP tidak valid.';
+        $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
     } else {
-        $stmt = $conn->prepare("UPDATE dokter SET nama=?, spesialis=?, no_hp=?, alamat=? WHERE id=?");
-        if ($stmt) {
-            $stmt->bind_param('ssssi', $nama, $spesialis, $no_hp, $alamat, $id);
-            $stmt->execute();
-            $stmt->close();
-            header('Location: data_dokter.php'); 
-            exit;
+        $id       = (int)($_POST['id'] ?? 0);
+        $nama     = trim($_POST['nama'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $no_hp    = trim($_POST['no_hp'] ?? '');
+        $alamat   = trim($_POST['alamat'] ?? '');
+        $role_in  = $_POST['role'] ?? 'user';
+        $role     = ($role_in === 'admin') ? 'admin' : 'user';
+        $newpass  = $_POST['password_baru'] ?? '';
+
+        if ($id<=0 || $nama==='' || $email==='') {
+            $flash['error'] = 'Nama dan email wajib diisi.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $flash['error'] = 'Format email tidak valid.';
         } else {
-            $flash_err = 'Gagal memperbarui data.';
+            // Proteksi admin terakhir: bila target adalah admin terakhir dan akan didemote ke user
+            $cur = mysqli_prepare($conn, "SELECT role, email FROM users WHERE id=?");
+            mysqli_stmt_bind_param($cur, "i", $id);
+            mysqli_stmt_execute($cur);
+            $res = mysqli_stmt_get_result($cur);
+            $row = mysqli_fetch_assoc($res);
+            mysqli_stmt_close($cur);
+
+            if (!$row) {
+                $flash['error'] = 'Pengguna tidak ditemukan.';
+            } else {
+                $isTargetAdmin = $row['role']==='admin';
+                if ($isTargetAdmin && $role !== 'admin' && count_admins($conn) <= 1) {
+                    $flash['error'] = 'Tidak bisa menurunkan peran admin terakhir.';
+                } else {
+                    // Cek email unik (kecuali milik sendiri)
+                    $cek = mysqli_prepare($conn, "SELECT id FROM users WHERE email=? AND id<>?");
+                    mysqli_stmt_bind_param($cek, "si", $email, $id);
+                    mysqli_stmt_execute($cek);
+                    mysqli_stmt_store_result($cek);
+                    if (mysqli_stmt_num_rows($cek) > 0) {
+                        $flash['error'] = 'Email tersebut sudah digunakan pengguna lain.';
+                    } else {
+                        mysqli_stmt_close($cek);
+
+                        if ($newpass !== '') {
+                            if (strlen($newpass) < 6) {
+                                $flash['error'] = 'Password baru minimal 6 karakter.';
+                            } else {
+                                $hash = md5($newpass);
+                                $stmt = mysqli_prepare($conn, "UPDATE users SET nama=?, email=?, no_hp=?, alamat=?, role=?, password=? WHERE id=?");
+                                mysqli_stmt_bind_param($stmt, "ssssssi", $nama, $email, $no_hp, $alamat, $role, $hash, $id);
+                                $ok = mysqli_stmt_execute($stmt);
+                                mysqli_stmt_close($stmt);
+                                $flash[$ok ? 'success' : 'error'] = $ok ? 'Data pengguna dan password diperbarui.' : 'Gagal memperbarui pengguna.';
+                            }
+                        } else {
+                            $stmt = mysqli_prepare($conn, "UPDATE users SET nama=?, email=?, no_hp=?, alamat=?, role=? WHERE id=?");
+                            mysqli_stmt_bind_param($stmt, "sssssi", $nama, $email, $no_hp, $alamat, $role, $id);
+                            $ok = mysqli_stmt_execute($stmt);
+                            mysqli_stmt_close($stmt);
+                            $flash[$ok ? 'success' : 'error'] = $ok ? 'Data pengguna diperbarui.' : 'Gagal memperbarui pengguna.';
+                        }
+                    }
+                    // if (isset($cek) && is_object($cek)) mysqli_stmt_close($cek);
+                }
+            }
         }
     }
 }
 
-// ---------- Handler: Hapus (POST) ----------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
-    if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
-        http_response_code(400);
-        die('Invalid CSRF token.');
-    }
-    $id = (int)($_POST['id'] ?? 0);
-    if ($id > 0) {
-        $stmt = $conn->prepare("DELETE FROM dokter WHERE id=?");
-        if ($stmt) {
-            $stmt->bind_param('i', $id);
-            $stmt->execute();
-            $stmt->close();
+// Hapus user
+if (isset($_GET['hapus'])) {
+    $id = (int)$_GET['hapus'];
+
+    // Tak boleh hapus diri sendiri
+    if ($id === (int)($_SESSION['id'] ?? 0)) {
+        $flash['error'] = 'Anda tidak bisa menghapus akun Anda sendiri.';
+    } else {
+        // Cek role target
+        $cur = mysqli_prepare($conn, "SELECT role FROM users WHERE id=?");
+        mysqli_stmt_bind_param($cur, "i", $id);
+        mysqli_stmt_execute($cur);
+        $res = mysqli_stmt_get_result($cur);
+        $row = mysqli_fetch_assoc($res);
+        mysqli_stmt_close($cur);
+
+        if (!$row) {
+            $flash['error'] = 'Pengguna tidak ditemukan.';
+        } else {
+            if ($row['role']==='admin' && count_admins($conn) <= 1) {
+                $flash['error'] = 'Tidak bisa menghapus admin terakhir.';
+            } else {
+                $del = mysqli_prepare($conn, "DELETE FROM users WHERE id=?");
+                mysqli_stmt_bind_param($del, "i", $id);
+                $ok = mysqli_stmt_execute($del);
+                mysqli_stmt_close($del);
+                $flash[$ok ? 'success' : 'error'] = $ok ? 'Pengguna berhasil dihapus.' : 'Gagal menghapus pengguna.';
+            }
         }
     }
-    header('Location: data_dokter.php'); 
-    exit;
 }
 
-// ---------- Query ringkas: total & list ----------
-$total = 0;
-if ($res = $conn->query("SELECT COUNT(*) AS total FROM dokter")) {
-    $row = $res->fetch_assoc();
-    $total = (int)($row['total'] ?? 0);
-    $res->close();
-}
+// Hitung total user
+$total_users_q = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users");
+$total = (int)mysqli_fetch_assoc($total_users_q)['total'];
 
-// (Opsional) pagination sederhana
-$per_page = 50;
-$page = max(1, (int)($_GET['page'] ?? 1));
-$offset = ($page - 1) * $per_page;
-
-$list = [];
-$stmt = $conn->prepare("SELECT id, nama, spesialis, no_hp, alamat FROM dokter ORDER BY id DESC LIMIT ? OFFSET ?");
-if ($stmt) {
-    $stmt->bind_param('ii', $per_page, $offset);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($r = $res->fetch_assoc()) { $list[] = $r; }
-    $stmt->close();
-}
-$total_pages = (int)ceil(($total ?: 1)/$per_page);
+// Ambil data users
+$users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -128,7 +183,7 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Dokter - Rafflesia Sehat</title>
+    <title>Data Pengguna - Rafflesia Sehat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -277,6 +332,12 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
     }
 
+    .form-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
     .btn-primary-custom {
         background: var(--primary-color);
         border: none;
@@ -409,14 +470,24 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         transform: translateX(5px);
     }
 
-    .spesialis-badge {
+    .badge-role {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid;
+    }
+
+    .badge-admin {
+        background: #1e40af;
+        color: #bfdbfe;
+        border-color: #1d4ed8;
+    }
+
+    .badge-user {
         background: #f0fdf4;
         color: #15803d;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        border: 1px solid #bbf7d0;
-        font-weight: 500;
+        border-color: #bbf7d0;
     }
 
     .stat-card {
@@ -467,9 +538,21 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         padding: 16px 20px;
         font-weight: 500;
         box-shadow: var(--shadow-light);
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid #059669;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #dc2626;
         border-left: 4px solid #dc2626;
     }
 
+    /* Modal Styles */
     .modal-content {
         border-radius: 16px;
         border: none;
@@ -584,9 +667,9 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
             font-size: 0.95rem;
         }
 
-        .spesialis-badge {
+        .badge-role {
             font-size: 0.8rem;
-            padding: 4px 8px;
+            padding: 6px 10px;
         }
 
         .stat-card {
@@ -663,7 +746,7 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
             <div class="d-flex align-items-center">
                 <div class="user-info">
                     <i class="fas fa-user-shield"></i>
-                    <span><?= h($_SESSION['nama'] ?? 'Admin'); ?></span>
+                    <span><?= h($_SESSION['nama']); ?></span>
                 </div>
                 <a href="../logout.php" class="btn-logout ms-3">
                     <i class="fas fa-sign-out-alt"></i>
@@ -673,61 +756,73 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Header Section -->
+            <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
-                        <i class="fas fa-user-md"></i>
-                        <span>Data Dokter</span>
+                        <i class="fas fa-users-cog"></i>
+                        <span>Data Pengguna</span>
                     </h1>
-                    <p class="page-subtitle">Kelola data dokter dan spesialisasi</p>
+                    <p class="page-subtitle">Kelola akun pengguna, peran (admin/user), dan informasi kontak.</p>
                 </div>
                 <div class="stat-card fade-in-up">
-                    <div class="stat-number"><?= (int)$total; ?></div>
-                    <div class="stat-label">Total Dokter</div>
+                    <div class="stat-number"><?= $total; ?></div>
+                    <div class="stat-label">Total Pengguna</div>
                 </div>
             </div>
 
-            <?php if (!empty($flash_err)): ?>
+            <!-- Flash -->
+            <?php if ($flash['success']): ?>
+            <div class="alert alert-success alert-custom fade-in-up" role="alert">
+                <i class="fas fa-check-circle me-2"></i><?= h($flash['success']); ?>
+            </div>
+            <?php endif; ?>
+            <?php if ($flash['error']): ?>
             <div class="alert alert-danger alert-custom fade-in-up" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <?= h($flash_err) ?>
+                <i class="fas fa-exclamation-circle me-2"></i><?= h($flash['error']); ?>
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah Dokter -->
+            <!-- Form Tambah -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
-                    <i class="fas fa-plus-circle me-2"></i>
-                    <span>Tambah Dokter Baru</span>
+                    <i class="fas fa-user-plus me-2"></i>
+                    <span>Tambah Pengguna Baru</span>
                 </h5>
-                <form method="POST" class="row g-3" autocomplete="off">
-                    <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                <form method="POST" class="row g-3">
+                    <input type="hidden" name="csrf" value="<?= h($csrf); ?>">
                     <div class="col-md-3">
-                        <input type="text" name="nama" class="form-control" placeholder="Nama Dokter" required>
+                        <input type="text" name="nama" class="form-control" placeholder="Nama Lengkap" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" name="email" class="form-control" placeholder="email@contoh.com" required>
                     </div>
                     <div class="col-md-2">
-                        <input type="text" name="spesialis" class="form-control" placeholder="Spesialis" required>
+                        <input type="password" name="password" class="form-control" placeholder="Password (≥6)"
+                            required>
                     </div>
                     <div class="col-md-2">
-                        <input type="text" name="no_hp" class="form-control" placeholder="No. HP" required>
+                        <select name="role" class="form-control" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
                     </div>
-                    <div class="col-md-4">
-                        <input type="text" name="alamat" class="form-control" placeholder="Alamat" required>
-                    </div>
-                    <div class="col-md-1 d-grid">
+                    <div class="col-md-2 d-grid">
                         <button type="submit" name="tambah" class="btn-success-custom">
                             <i class="fas fa-plus me-1"></i>
-                            <span class="d-none d-md-inline">Tambah</span>
+                            <span>Tambah</span>
                         </button>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="no_hp" class="form-control mb-2" placeholder="No. HP (opsional)">
+                        <input type="text" name="alamat" class="form-control" placeholder="Alamat (opsional)">
                     </div>
                 </form>
             </div>
 
-            <!-- Tabel Dokter -->
+            <!-- Tabel Users -->
             <div class="card-custom p-4 fade-in-up">
                 <div class="table-container">
                     <div class="table-responsive">
@@ -735,72 +830,53 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Nama Dokter</th>
-                                    <th>Spesialis</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
                                     <th>No. HP</th>
                                     <th>Alamat</th>
+                                    <th>Role</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $no = 1 + $offset; foreach ($list as $d): ?>
+                                <?php $no=1; while($u=mysqli_fetch_assoc($users)): ?>
                                 <tr class="fade-in-up">
                                     <td class="fw-semibold"><?= $no++; ?></td>
-                                    <td class="fw-semibold"><?= h($d['nama']) ?></td>
-                                    <td><span class="spesialis-badge"><?= h($d['spesialis']) ?></span></td>
-                                    <td><?= h($d['no_hp']) ?></td>
-                                    <td><?= h($d['alamat']) ?></td>
+                                    <td class="fw-semibold"><?= h($u['nama']); ?></td>
+                                    <td><?= h($u['email']); ?></td>
+                                    <td><?= h($u['no_hp']); ?></td>
+                                    <td><?= h($u['alamat']); ?></td>
+                                    <td>
+                                        <?php if ($u['role']==='admin'): ?>
+                                        <span class="badge-role badge-admin">Admin</span>
+                                        <?php else: ?>
+                                        <span class="badge-role badge-user">User</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <div class="d-flex gap-2 justify-content-center flex-wrap">
                                             <button type="button" class="btn-warning-custom" data-bs-toggle="modal"
-                                                data-bs-target="#editModal<?= (int)$d['id'] ?>">
+                                                data-bs-target="#editModal<?= $u['id']; ?>">
                                                 <i class="fas fa-edit me-1"></i>
                                                 <span>Edit</span>
                                             </button>
-
-                                            <form method="POST"
-                                                onsubmit="return confirm('Yakin hapus data dokter <?= h($d['nama']) ?>?')"
-                                                class="d-inline">
-                                                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-                                                <input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-                                                <button type="submit" name="hapus" class="btn-danger-custom">
-                                                    <i class="fas fa-trash me-1"></i>
-                                                    <span>Hapus</span>
-                                                </button>
-                                            </form>
+                                            <a href="?hapus=<?= (int)$u['id']; ?>"
+                                                onclick="return confirm('Yakin hapus pengguna <?= h($u['nama']); ?>?')"
+                                                class="btn-danger-custom text-decoration-none">
+                                                <i class="fas fa-trash me-1"></i>
+                                                <span>Hapus</span>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
-                                <?php endforeach; ?>
-
-                                <?php if (empty($list)): ?>
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        <i class="fas fa-inbox me-2"></i>
-                                        Belum ada data dokter.
-                                    </td>
-                                </tr>
-                                <?php endif; ?>
+                                <?php endwhile; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                <!-- Pagination -->
-                <?php if ($total_pages > 1): ?>
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <?php for ($p=1; $p<=$total_pages; $p++): ?>
-                        <li class="page-item <?= $p===$page?'active':'' ?>">
-                            <a class="page-link" href="?page=<?= $p ?>"><?= $p ?></a>
-                        </li>
-                        <?php endfor; ?>
-                    </ul>
-                </nav>
-                <?php endif; ?>
             </div>
 
-            <!-- Back Button -->
+            <!-- Back -->
             <div class="mt-4 fade-in-up">
                 <a href="index.php" class="btn-secondary-custom">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -811,63 +887,77 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
     </div>
 
     <!-- Modal Edit - Ditempatkan di luar tabel -->
-    <?php foreach ($list as $d): ?>
-    <div class="modal fade" id="editModal<?= (int)$d['id'] ?>" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <?php mysqli_data_seek($users, 0); ?>
+    <?php while($u=mysqli_fetch_assoc($users)): ?>
+    <div class="modal fade" id="editModal<?= $u['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <form method="POST" autocomplete="off">
+                <form method="POST">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="fas fa-edit me-2"></i>
-                            <span>Edit Data Dokter</span>
+                            <i class="fas fa-user-edit me-2"></i>
+                            <span>Edit Pengguna</span>
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-                        <input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-                        <div class="mb-3">
-                            <label class="form-label">Nama Dokter</label>
-                            <input type="text" name="nama" class="form-control" value="<?= h($d['nama']) ?>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Spesialis</label>
-                            <input type="text" name="spesialis" class="form-control" value="<?= h($d['spesialis']) ?>"
-                                required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">No. HP</label>
-                            <input type="text" name="no_hp" class="form-control" value="<?= h($d['no_hp']) ?>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Alamat</label>
-                            <input type="text" name="alamat" class="form-control" value="<?= h($d['alamat']) ?>"
-                                required>
+                        <input type="hidden" name="csrf" value="<?= h($csrf); ?>">
+                        <input type="hidden" name="id" value="<?= (int)$u['id']; ?>">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nama</label>
+                                <input type="text" name="nama" class="form-control" value="<?= h($u['nama']); ?>"
+                                    required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="<?= h($u['email']); ?>"
+                                    required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">No. HP</label>
+                                <input type="text" name="no_hp" class="form-control" value="<?= h($u['no_hp']); ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role</label>
+                                <select name="role" class="form-control">
+                                    <option value="user" <?= $u['role']==='user'?'selected':''; ?>>User</option>
+                                    <option value="admin" <?= $u['role']==='admin'?'selected':''; ?>>Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Alamat</label>
+                                <input type="text" name="alamat" class="form-control" value="<?= h($u['alamat']); ?>">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Password Baru (opsional)</label>
+                                <input type="password" name="password_baru" class="form-control"
+                                    placeholder="Kosongkan jika tidak mengubah">
+                                <small class="text-muted">Minimal 6 karakter. Jika diisi, password akan diganti.</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>
-                            Batal
-                        </button>
                         <button type="submit" name="update" class="btn-primary-custom">
                             <i class="fas fa-save me-1"></i>
-                            Simpan Perubahan
+                            <span>Simpan Perubahan</span>
+                        </button>
+                        <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>
+                            <span>Batal</span>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <?php endforeach; ?>
+    <?php endwhile; ?>
 
-    <!-- Vendor JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
     // Animasi baris tabel
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('tbody tr').forEach((row, i) => {
             row.style.animationDelay = `${i * 0.05}s`;
         });

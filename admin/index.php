@@ -72,7 +72,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         min-height: 100vh;
         line-height: 1.6;
     }
@@ -113,7 +113,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         font-weight: 500;
         padding: 8px 18px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -156,7 +156,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         border: none;
         border-radius: 16px;
         box-shadow: var(--shadow-light);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         height: 100%;
         border-left: 5px solid var(--primary-color);
         overflow: hidden;
@@ -172,7 +172,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         height: 4px;
         background: var(--primary-color);
         transform: scaleX(0);
-        transition: transform 0.3s ease;
+        transition: transform 1s ease;
     }
 
     .dashboard-card:hover {
@@ -188,7 +188,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         font-size: 2.8rem;
         color: var(--primary-color);
         margin-bottom: 20px;
-        transition: transform 0.3s ease;
+        transition: transform 1s ease;
     }
 
     .dashboard-card:hover .card-icon {
@@ -217,7 +217,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         font-weight: 500;
         padding: 10px 24px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -273,7 +273,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         padding: 25px 20px;
         text-align: center;
         box-shadow: var(--shadow-light);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         border: 1px solid rgba(0, 0, 0, 0.05);
         position: relative;
         overflow: hidden;
@@ -362,7 +362,7 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         border-radius: 8px;
         font-size: 0.85rem;
         text-decoration: none;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
     }
 
     .btn-view-all:hover {

@@ -181,7 +181,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg);
         color: var(--text-dark);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         min-height: 100vh;
         line-height: 1.6;
     }
@@ -222,7 +222,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 8px 18px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -261,7 +261,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         border: none;
         border-radius: 16px;
         box-shadow: var(--shadow-light);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         border-left: 5px solid var(--primary-color);
         overflow: hidden;
         position: relative;
@@ -276,7 +276,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         height: 4px;
         background: var(--primary-color);
         transform: scaleX(0);
-        transition: transform 0.3s ease;
+        transition: transform 1s ease;
     }
 
     .card-custom:hover {
@@ -294,7 +294,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         border-radius: 12px;
         padding: 12px 15px;
         font-size: 1rem;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         background: var(--card-light);
         color: var(--text-dark);
     }
@@ -318,7 +318,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 12px 24px;
         border-radius: 12px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
     }
 
@@ -335,7 +335,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 12px 24px;
         border-radius: 12px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
     }
 
@@ -352,7 +352,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 8px 16px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         box-shadow: 0 3px 8px rgba(245, 158, 11, 0.3);
     }
 
@@ -369,7 +369,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 8px 16px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         box-shadow: 0 3px 8px rgba(239, 68, 68, 0.3);
     }
 
@@ -386,7 +386,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         font-weight: 500;
         padding: 10px 20px;
         border-radius: 10px;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -431,11 +431,11 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         border-color: #f1f5f9;
         vertical-align: middle;
         color: var(--text-dark);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
     }
 
     .table-custom tbody tr {
-        transition: all 0.3s ease;
+        transition: all 1s ease;
     }
 
     .table-custom tbody tr:hover {
@@ -469,7 +469,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         padding: 25px;
         text-align: center;
         box-shadow: var(--shadow-light);
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         border: 1px solid rgba(0, 0, 0, 0.05);
         position: relative;
         overflow: hidden;

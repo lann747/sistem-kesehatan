@@ -2,21 +2,18 @@
 session_start();
 include '../config/db.php';
 
-// Pastikan hanya user yang bisa mengakses
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php');
     exit;
 }
 
-// --- Params pencarian & filter ---
 $q        = trim($_GET['q'] ?? '');
 $spes     = trim($_GET['spesialis'] ?? '');
-$sort     = $_GET['sort'] ?? 'nama_asc'; // nama_asc|nama_desc|spes_asc|spes_desc
+$sort     = $_GET['sort'] ?? 'nama_asc'; 
 $page     = max(1, (int)($_GET['page'] ?? 1));
-$per_page = 9; // jumlah kartu per halaman
+$per_page = 9; 
 $offset   = ($page - 1) * $per_page;
 
-// Sanitasi pilihan sort (whitelist)
 $sort_map = [
     'nama_asc'  => 'nama ASC',
     'nama_desc' => 'nama DESC',
@@ -25,7 +22,6 @@ $sort_map = [
 ];
 $order_sql = $sort_map[$sort] ?? $sort_map['nama_asc'];
 
-// Ambil daftar spesialis (untuk dropdown)
 $spesialis_list = [];
 $res_spes = mysqli_query($conn, "SELECT DISTINCT spesialis FROM dokter ORDER BY spesialis ASC");
 if ($res_spes) {
@@ -36,12 +32,10 @@ if ($res_spes) {
     }
 }
 
-// Helper untuk membuat pola LIKE
 function likePattern($s) {
     return '%' . str_replace(['%', '_'], ['\%','\_'], $s) . '%';
 }
 
-// --- Hitung total data (untuk pagination) ---
 $where = "WHERE 1=1";
 $params = [];
 $types  = "";
@@ -71,7 +65,6 @@ mysqli_stmt_close($stmt_cnt);
 
 $total_pages = max(1, (int)ceil($total_rows / $per_page));
 
-// --- Ambil data dokter (paged) ---
 $sql_data = "SELECT id, nama, spesialis, no_hp, alamat
              FROM dokter
              $where
@@ -80,7 +73,6 @@ $sql_data = "SELECT id, nama, spesialis, no_hp, alamat
 
 $stmt = mysqli_prepare($conn, $sql_data);
 
-// Bind param dinamis (+ limit & offset integer)
 if ($types !== "") {
     $bind_types = $types . "ii";
     $params_with_limit = [...$params, $per_page, $offset];
@@ -92,7 +84,6 @@ if ($types !== "") {
 mysqli_stmt_execute($stmt);
 $res = mysqli_stmt_get_result($stmt);
 
-// Utility: buat link tel/wa secara aman
 function tel_link($no) {
     $no = trim($no ?? '');
     if ($no === '') return '';
@@ -102,14 +93,12 @@ function tel_link($no) {
 function wa_link($no) {
     $no = trim($no ?? '');
     if ($no === '') return '';
-    // Hapus semua non-digit kecuali leading +
     if ($no[0] === '+') {
         $digits = '+' . preg_replace('/\D+/', '', substr($no,1));
     } else {
         $digits = preg_replace('/\D+/', '', $no);
     }
-    if (strlen(preg_replace('/\D+/', '', $digits)) < 8) return ''; // minimal wajar
-    // WhatsApp menganjurkan tanpa tanda plus di wa.me
+    if (strlen(preg_replace('/\D+/', '', $digits)) < 8) return ''; 
     $wa = ltrim($digits, '+');
     return "https://wa.me/" . htmlspecialchars($wa, ENT_QUOTES);
 }
@@ -439,7 +428,6 @@ function wa_link($no) {
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -456,12 +444,10 @@ function wa_link($no) {
         </div>
     </nav>
 
-    <!-- Main -->
     <div class="main-content">
         <div class="container">
             <h1 class="page-title">Daftar Dokter</h1>
 
-            <!-- Pencarian & Filter -->
             <div class="search-panel fade-in-up">
                 <form method="get" class="row g-3 align-items-end">
                     <div class="col-md-5">
@@ -505,7 +491,6 @@ function wa_link($no) {
                 </form>
             </div>
 
-            <!-- Grid Dokter -->
             <div class="row g-4">
                 <?php if ($total_rows === 0): ?>
                 <div class="col-12">
@@ -558,12 +543,10 @@ function wa_link($no) {
                 <?php endif; ?>
             </div>
 
-            <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
             <nav class="mt-4 d-flex justify-content-center">
                 <ul class="pagination">
                     <?php
-                        // Helper untuk mempertahankan query string lain saat pindah halaman
                         function build_qs($overrides = []) {
                             $base = $_GET;
                             foreach ($overrides as $k=>$v) { $base[$k] = $v; }
@@ -576,7 +559,6 @@ function wa_link($no) {
                         <a class="page-link" href="<?= $page<=1?'#':build_qs(['page'=>$prev]); ?>">&laquo;</a>
                     </li>
                     <?php
-                        // Tampilkan range kecil yang ramah
                         $start = max(1, $page-2);
                         $end   = min($total_pages, $page+2);
                         if ($start > 1) {
@@ -603,7 +585,6 @@ function wa_link($no) {
             </p>
             <?php endif; ?>
 
-            <!-- Back -->
             <div class="mt-3">
                 <a href="index.php" class="btn btn-outline-custom">
                     <i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard

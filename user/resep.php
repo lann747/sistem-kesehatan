@@ -2,7 +2,6 @@
 session_start();
 include '../config/db.php';
 
-// Pastikan hanya user yang bisa mengakses
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php');
     exit;
@@ -11,9 +10,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 $user_id = (int)$_SESSION['id'];
 
 
-/* ============================================================
-   Helper
-   ============================================================ */
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 function wa_link($no) {
     $no = trim($no ?? '');
@@ -33,16 +29,10 @@ function status_badge($s){
     return '<span class="badge-status" style="background:'.$x[0].'">'.$x[1].'</span>';
 }
 
-/* ============================================================
-   Ambil daftar dokter untuk dropdown
-   ============================================================ */
 $doctors = [];
 $resDoc = mysqli_query($conn, "SELECT id, nama, spesialis, no_hp FROM dokter ORDER BY nama ASC");
 if ($resDoc) while ($r = mysqli_fetch_assoc($resDoc)) $doctors[] = $r;
 
-/* ============================================================
-   Handle: Tambah resep (milik user sendiri)
-   ============================================================ */
 $msg_success = '';
 $msg_error   = '';
 
@@ -52,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     $catatan   = trim($_POST['catatan'] ?? '');
     $status    = trim($_POST['status'] ?? 'baru');
 
-    // Obat (array of rows)
     $nama_obat   = $_POST['nama_obat'] ?? [];
     $dosis       = $_POST['dosis'] ?? [];
     $aturan      = $_POST['aturan'] ?? [];
@@ -62,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) {
         $msg_error = 'Format tanggal tidak valid.';
     } else {
-        // Validasi dokter
         $cekDok = mysqli_prepare($conn, "SELECT COUNT(*) FROM dokter WHERE id=?");
         mysqli_stmt_bind_param($cekDok, "i", $dokter_id);
         mysqli_stmt_execute($cekDok);
@@ -73,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
         if (!$exists) {
             $msg_error = 'Dokter tidak ditemukan.';
         } else {
-            // Susun JSON obat
             $items = [];
             if (is_array($nama_obat)) {
                 $n = count($nama_obat);
@@ -101,9 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     }
 }
 
-/* ============================================================
-   Handle: Hapus resep (milik user sendiri)
-   ============================================================ */
 if (isset($_GET['hapus'])) {
     $rid = (int)$_GET['hapus'];
     $del = mysqli_prepare($conn, "DELETE FROM resep WHERE id=? AND user_id=?");
@@ -118,9 +102,6 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-/* ============================================================
-   Pagination daftar resep user
-   ============================================================ */
 $page     = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 8;
 $offset   = ($page - 1) * $per_page;
@@ -510,7 +491,6 @@ mysqli_stmt_close($stmt);
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg no-print">
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
@@ -539,7 +519,6 @@ mysqli_stmt_close($stmt);
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah Resep -->
             <div class="card-custom p-4 mb-4 fade-in-up no-print">
                 <h5 class="mb-3"><i class="fas fa-prescription-bottle-alt me-2"></i> Tambah Resep</h5>
                 <form method="post" id="formResep" class="row g-3">
@@ -594,7 +573,6 @@ mysqli_stmt_close($stmt);
                 </form>
             </div>
 
-            <!-- Daftar Resep -->
             <div class="card-custom p-4 fade-in-up">
                 <h5 class="mb-3"><i class="fas fa-file-medical me-2"></i> Daftar Resep Saya</h5>
 
@@ -656,18 +634,15 @@ mysqli_stmt_close($stmt);
                                 <td class="small"><?= h($ringkas_text); ?></td>
                                 <td class="no-print">
                                     <div class="d-flex gap-1">
-                                        <!-- Detail -->
                                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                             data-bs-target="#detailModal"
                                             data-resep='<?= h(json_encode($row), ENT_QUOTES); ?>'>
                                             <i class="fas fa-eye me-1"></i> Detail
                                         </button>
-                                        <!-- Cetak -->
                                         <button class="btn btn-sm btn-outline-success"
                                             onclick='printResep(<?= json_encode($row, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT); ?>)'>
                                             <i class="fas fa-print me-1"></i> Cetak
                                         </button>
-                                        <!-- Hapus -->
                                         <a class="btn btn-sm btn-outline-danger" href="?hapus=<?= h($row['id']); ?>"
                                             onclick="return confirm('Hapus resep ini?');">
                                             <i class="fas fa-trash me-1"></i> Hapus
@@ -680,7 +655,6 @@ mysqli_stmt_close($stmt);
                     </table>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <nav class="mt-4 d-flex justify-content-center no-print">
                     <ul class="pagination">
@@ -719,7 +693,6 @@ mysqli_stmt_close($stmt);
         </div>
     </div>
 
-    <!-- Modal Detail -->
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -742,12 +715,10 @@ mysqli_stmt_close($stmt);
         </div>
     </div>
 
-    <!-- Area cetak tersembunyi -->
     <div id="printArea" class="print-area" style="display:none;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Dinamis: baris obat
     const list = document.getElementById('obatList');
     const addRowBtn = document.getElementById('addRow');
 
@@ -784,10 +755,8 @@ mysqli_stmt_close($stmt);
             if (r) r.remove();
         }
     });
-    // Tambahkan 1 baris default
     addRow();
 
-    // Modal detail
     const detailModal = document.getElementById('detailModal');
     const detailBody = document.getElementById('detailBody');
     const btnCetakModal = document.getElementById('btnCetakModal');
@@ -798,7 +767,6 @@ mysqli_stmt_close($stmt);
         try {
             const data = JSON.parse(btn.getAttribute('data-resep'));
             lastResep = data;
-            // Render detail
             const obat = data.obat ? JSON.parse(data.obat) : [];
             let rows = '';
             if (Array.isArray(obat) && obat.length) {
@@ -856,7 +824,6 @@ mysqli_stmt_close($stmt);
         if (lastResep) printResep(lastResep);
     });
 
-    // Cetak
     function printResep(data) {
         const area = document.getElementById('printArea');
         const obat = data.obat ? JSON.parse(data.obat) : [];

@@ -2,18 +2,15 @@
 session_start();
 require_once __DIR__ . '/../config/db.php';
 
-// Hanya user yang boleh masuk
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php'); exit;
 }
 
-// Helper escape
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// ---------- Ambil statistik ringkas ----------
 $total_keluhan_data = 0;
 $total_dokter_data  = 0;
-$keluhan_selesai_data = 0; // belum ada field status, set 0
+$keluhan_selesai_data = 0; 
 
 if ($res = $conn->query("SELECT COUNT(*) AS total FROM pasien")) {
     $total_keluhan_data = (int)($res->fetch_assoc()['total'] ?? 0);
@@ -25,7 +22,6 @@ if ($res = $conn->query("SELECT COUNT(*) AS total FROM dokter")) {
 }
 $progress = $total_keluhan_data > 0 ? (int)round(($keluhan_selesai_data / $total_keluhan_data) * 100) : 0;
 
-// (Opsional) daftar dokter terbaru untuk quick access
 $recent_dokter = [];
 if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC LIMIT 6")) {
     while ($row = $res->fetch_assoc()) { $recent_dokter[] = $row; }
@@ -530,7 +526,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         }
     }
 
-    /* Custom scrollbar */
     ::-webkit-scrollbar {
         width: 8px;
     }
@@ -551,7 +546,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -571,10 +565,8 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Welcome Section -->
             <div class="welcome-section fade-in-up">
                 <div class="row align-items-center">
                     <div class="col-md-8">
@@ -590,7 +582,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
 
             <h1 class="page-title fade-in-up">Dashboard Pengguna</h1>
 
-            <!-- Stats Section -->
             <div class="row stats-section fade-in-up">
                 <div class="col-md-3 mb-4">
                     <div class="stat-card">
@@ -618,7 +609,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
                 </div>
             </div>
 
-            <!-- Features -->
             <div class="row g-4">
                 <div class="col-md-6 col-lg-4 fade-in-up">
                     <div class="dashboard-card p-4 text-center">
@@ -687,7 +677,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
                 </div>
             </div>
 
-            <!-- Dokter terbaru -->
             <div class="row g-4 mt-1">
                 <div class="col-12 fade-in-up">
                     <div class="dashboard-card p-4">
@@ -723,7 +712,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         </div>
     </div>
 
-    <!-- Footer -->
     <footer>
         <div class="container position-relative">
             <p class="mb-0 fw-semibold">© <?= date('Y'); ?> Sistem Informasi Kesehatan | Universitas Bengkulu</p>
@@ -733,21 +721,17 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Enhanced animations
     document.addEventListener('DOMContentLoaded', () => {
-        // Animate cards with staggered delay
         document.querySelectorAll('.dashboard-card').forEach((card, i) => {
             card.style.animationDelay = `${i * 0.1}s`;
             card.classList.add('fade-in-up');
         });
 
-        // Animate stat cards
         document.querySelectorAll('.stat-card').forEach((card, i) => {
             card.style.animationDelay = `${i * 0.15}s`;
             card.classList.add('fade-in-up');
         });
 
-        // Add hover effects to stat cards
         document.querySelectorAll('.stat-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-5px) scale(1.02)';
@@ -758,7 +742,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
             });
         });
 
-        // Add ripple effect to buttons
         document.querySelectorAll('.btn-custom').forEach(button => {
             button.addEventListener('click', function(e) {
                 const ripple = document.createElement('span');
@@ -785,7 +768,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
             });
         });
 
-        // Add CSS for ripple animation
         const style = document.createElement('style');
         style.textContent = `
             @keyframes ripple {

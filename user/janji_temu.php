@@ -2,7 +2,6 @@
 session_start();
 include '../config/db.php';
 
-// Pastikan hanya user yang bisa mengakses
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php');
     exit;
@@ -10,27 +9,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 
 $user_id = (int)$_SESSION['id'];
 
-// --- Pastikan tabel janji_temu ada (migrasi ringan otomatis) ---
-
-// --- Ambil daftar dokter (untuk dropdown) ---
 $doctors = [];
 $resDoc = mysqli_query($conn, "SELECT id, nama, spesialis, no_hp FROM dokter ORDER BY nama ASC");
 if ($resDoc) {
     while ($r = mysqli_fetch_assoc($resDoc)) $doctors[] = $r;
 }
 
-// --- Helpers ---
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 function is_future_slot($dateStr, $timeStr) {
     $dateStr = trim($dateStr); $timeStr = trim($timeStr);
     if (!$dateStr || !$timeStr) return false;
     $slotTs = strtotime($dateStr . ' ' . $timeStr);
     if ($slotTs === false) return false;
-    // Toleransi 59 detik agar tidak ada edge case server time skew
     return $slotTs >= (time() - 59);
 }
 function valid_time_range($timeStr) {
-    // Izinkan slot antara 07:00 - 20:00
     return ($timeStr >= '07:00' && $timeStr <= '20:00');
 }
 function wa_link($no) {
@@ -42,7 +35,6 @@ function wa_link($no) {
     return 'https://wa.me/' . ltrim($digits, '+');
 }
 
-// --- Handle buat janji ---
 $msg_success = '';
 $msg_error   = '';
 
@@ -52,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat'])) {
     $jam       = trim($_POST['jam'] ?? '');
     $keluhan   = trim($_POST['keluhan'] ?? '');
 
-    // Validasi dasar
     if ($dokter_id <= 0 || $tanggal === '' || $jam === '') {
         $msg_error = 'Semua field wajib diisi.';
     } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) {
@@ -64,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat'])) {
     } elseif (!valid_time_range($jam)) {
         $msg_error = 'Jam konsultasi hanya antara 07:00 - 20:00.';
     } else {
-        // Cek dokter ada
         $cekDok = mysqli_prepare($conn, "SELECT COUNT(*) FROM dokter WHERE id = ?");
         mysqli_stmt_bind_param($cekDok, "i", $dokter_id);
         mysqli_stmt_execute($cekDok);
@@ -75,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat'])) {
         if (!$dokExists) {
             $msg_error = 'Dokter tidak ditemukan.';
         } else {
-            // Cek double-booking dokter di slot tsb (kecuali yang dibatalkan)
             $cek = mysqli_prepare($conn, "SELECT COUNT(*) FROM janji_temu WHERE dokter_id=? AND tanggal=? AND jam=? AND status <> 'dibatalkan'");
             mysqli_stmt_bind_param($cek, "iss", $dokter_id, $tanggal, $jam);
             mysqli_stmt_execute($cek);
@@ -86,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat'])) {
             if ($isTaken) {
                 $msg_error = 'Slot waktu tersebut sudah terisi. Silakan pilih jam lain.';
             } else {
-                // Simpan janji
                 $ins = mysqli_prepare($conn, "INSERT INTO janji_temu (user_id, dokter_id, tanggal, jam, keluhan, status) VALUES (?,?,?,?,?, 'menunggu')");
                 mysqli_stmt_bind_param($ins, "iisss", $user_id, $dokter_id, $tanggal, $jam, $keluhan);
                 if (mysqli_stmt_execute($ins)) {
@@ -100,11 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat'])) {
     }
 }
 
-// --- Handle batalkan janji (milik user sendiri & masih mendatang) ---
 if (isset($_GET['batal'])) {
     $jid = (int)$_GET['batal'];
 
-    // Ambil data janji
     $q = mysqli_prepare($conn, "SELECT tanggal, jam, status FROM janji_temu WHERE id=? AND user_id=?");
     mysqli_stmt_bind_param($q, "ii", $jid, $user_id);
     mysqli_stmt_execute($q);
@@ -128,12 +114,10 @@ if (isset($_GET['batal'])) {
     }
 }
 
-// --- Pagination daftar janji user ---
 $page     = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 8;
 $offset   = ($page - 1) * $per_page;
 
-// Hitung total
 $cnt = mysqli_prepare($conn, "SELECT COUNT(*) FROM janji_temu WHERE user_id=?");
 mysqli_stmt_bind_param($cnt, "i", $user_id);
 mysqli_stmt_execute($cnt);
@@ -143,7 +127,6 @@ mysqli_stmt_close($cnt);
 
 $total_pages = max(1, (int)ceil($total / $per_page));
 
-// Ambil data janji + join dokter
 $list = [];
 $sql = "
 SELECT j.id, j.tanggal, j.jam, j.keluhan, j.status,
@@ -160,7 +143,6 @@ $resList = mysqli_stmt_get_result($stmt);
 if ($resList) while ($r = mysqli_fetch_assoc($resList)) $list[] = $r;
 mysqli_stmt_close($stmt);
 
-// --- Badge status ---
 function status_badge($s) {
     $map = [
         'menunggu'     => ['bg' => '#f59e0b', 'text' => 'Menunggu'],
@@ -529,7 +511,6 @@ function status_badge($s) {
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
@@ -558,7 +539,6 @@ function status_badge($s) {
             </div>
             <?php endif; ?>
 
-            <!-- Form Buat Janji -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3"><i class="fas fa-calendar-plus me-2"></i> Buat Janji Baru</h5>
                 <form method="post" class="row g-3">
@@ -600,7 +580,6 @@ function status_badge($s) {
                 </form>
             </div>
 
-            <!-- Daftar Janji Saya -->
             <div class="card-custom p-4 fade-in-up">
                 <h5 class="mb-3"><i class="fas fa-calendar-alt me-2"></i> Janji Temu Saya</h5>
 
@@ -610,7 +589,6 @@ function status_badge($s) {
                 </div>
                 <?php else: ?>
 
-                <!-- Mobile View - Cards -->
                 <div class="d-md-none">
                     <?php foreach ($list as $row): 
                         $future = is_future_slot($row['tanggal'], $row['jam']);
@@ -671,7 +649,6 @@ function status_badge($s) {
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Desktop View - Table -->
                 <div class="d-none d-md-block">
                     <div class="table-responsive">
                         <table class="table table-custom align-middle">
@@ -737,7 +714,6 @@ function status_badge($s) {
                     </div>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <nav class="mt-4 d-flex justify-content-center">
                     <ul class="pagination">
@@ -780,7 +756,6 @@ function status_badge($s) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Client-side guard: tanggal & jam
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.querySelector('input[name="tanggal"]');
         const timeInput = document.querySelector('input[name="jam"]');

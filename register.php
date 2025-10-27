@@ -14,7 +14,6 @@ if (!empty($_SESSION['role'])) {
     }
 }
 
-// Generate CSRF token jika belum ada
 if (empty($_SESSION['csrf_register'])) {
     $_SESSION['csrf_register'] = bin2hex(random_bytes(32));
 }
@@ -564,7 +563,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
         const progressBar = document.getElementById('passwordProgress');
         const matchEl = document.getElementById('passwordMatch');
 
-        // Fungsi untuk mengecek kekuatan password
         function checkPasswordStrength(password) {
             let score = 0;
 
@@ -574,11 +572,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
                 class: ''
             };
 
-            // Panjang password
             if (password.length >= 6) score += 1;
             if (password.length >= 8) score += 1;
 
-            // Variasi karakter
             if (/[a-z]/.test(password)) score += 1;
             if (/[A-Z]/.test(password)) score += 1;
             if (/[0-9]/.test(password)) score += 1;
@@ -608,7 +604,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
             };
         }
 
-        // Event listener untuk input password
         passwordInput.addEventListener('input', function() {
             const val = this.value;
             const result = checkPasswordStrength(val);
@@ -627,7 +622,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
             }
         });
 
-        // Event listener untuk konfirmasi password
         confirmPasswordInput.addEventListener('input', function() {
             const ok = this.value && (this.value === passwordInput.value);
             matchEl.innerHTML = ok ?
@@ -635,7 +629,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
                 (this.value ? '<span style="color:#dc2626;">✗ Password tidak cocok</span>' : '');
         });
 
-        // Efek interaktif pada input fields
         document.querySelectorAll('.form-control').forEach(el => {
             el.addEventListener('focus', function() {
                 this.closest('.input-group').style.transform = 'translateY(-2px)';
@@ -646,7 +639,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
             });
         });
 
-        // Efek ripple pada tombol register
         document.querySelector('.btn-register').addEventListener('click', function(e) {
             if (this.form.checkValidity()) {
                 const rect = this.getBoundingClientRect();
@@ -672,7 +664,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
             }
         });
 
-        // Validasi form real-time
         const form = document.querySelector('form');
         const namaInput = document.getElementById('nama');
         const emailInput = document.getElementById('email');
@@ -680,22 +671,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
         function validateForm() {
             let isValid = true;
 
-            // Validasi nama
             if (!namaInput.value.trim()) {
                 isValid = false;
             }
 
-            // Validasi email
             if (!emailInput.value || !emailInput.validity.valid) {
                 isValid = false;
             }
 
-            // Validasi password
             if (!passwordInput.value || passwordInput.value.length < 6) {
                 isValid = false;
             }
 
-            // Validasi konfirmasi password
             if (!confirmPasswordInput.value || confirmPasswordInput.value !== passwordInput.value) {
                 isValid = false;
             }
@@ -703,7 +690,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
             return isValid;
         }
 
-        // Update status tombol berdasarkan validasi
         function updateButtonState() {
             const button = document.querySelector('.btn-register');
             if (validateForm()) {
@@ -720,7 +706,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($err) && isset($_POST['regist
         passwordInput.addEventListener('input', updateButtonState);
         confirmPasswordInput.addEventListener('input', updateButtonState);
 
-        // Inisialisasi status tombol
         updateButtonState();
     })();
     </script>

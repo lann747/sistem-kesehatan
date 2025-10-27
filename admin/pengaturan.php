@@ -2,29 +2,25 @@
 session_start();
 include '../config/db.php';
 
-// Hanya admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
 }
 
-// Helper
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
-// --- Tabel pengaturan: key-value ---
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS pengaturan (
     k VARCHAR(64) PRIMARY KEY,
     v TEXT
 ) ENGINE=InnoDB");
 
-// Inisialisasi default jika kosong
 $defaults = [
     'site_name'         => 'Sistem Informasi Kesehatan',
     'kontak_email'      => 'info@sistemkesehatan.id',
     'kontak_phone'      => '',
     'alamat_instansi'   => 'Universitas Bengkulu',
-    'maintenance_mode'  => '0', // 0=off, 1=on
-    'allow_registration'=> '1'  // 1=on, 0=off
+    'maintenance_mode'  => '0', 
+    'allow_registration'=> '1'  
 ];
 
 foreach ($defaults as $k => $v) {
@@ -38,20 +34,17 @@ foreach ($defaults as $k => $v) {
     }
 }
 
-// Ambil semua pengaturan ke array
 $settings = [];
 $res = mysqli_query($conn, "SELECT k, v FROM pengaturan");
 while ($row = mysqli_fetch_assoc($res)) {
     $settings[$row['k']] = $row['v'];
 }
 
-// --- CSRF token sederhana ---
 if (empty($_SESSION['csrf_pengaturan'])) {
     $_SESSION['csrf_pengaturan'] = bin2hex(random_bytes(16));
 }
 $csrf = $_SESSION['csrf_pengaturan'];
 
-// --- Simpan pengaturan umum ---
 if (isset($_POST['simpan_umum'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $csrf) {
         $notif_error = "Sesi kadaluarsa. Muat ulang halaman.";
@@ -84,7 +77,6 @@ if (isset($_POST['simpan_umum'])) {
     }
 }
 
-// --- Simpan pengaturan fitur (maintenance & registrasi) ---
 if (isset($_POST['simpan_fitur'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $csrf) {
         $notif_error = "Sesi kadaluarsa. Muat ulang halaman.";
@@ -107,7 +99,6 @@ if (isset($_POST['simpan_fitur'])) {
     }
 }
 
-// --- Ubah password admin (user saat ini) ---
 if (isset($_POST['ubah_password'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $csrf) {
         $notif_error = "Sesi kadaluarsa. Muat ulang halaman.";
@@ -137,7 +128,6 @@ if (isset($_POST['ubah_password'])) {
     }
 }
 
-// --- Ekspor CSV (users/dokter/pasien) ---
 if (isset($_GET['backup'])) {
     $allowed = ['users','dokter','pasien'];
     $t = $_GET['backup'];
@@ -147,7 +137,6 @@ if (isset($_GET['backup'])) {
         header('Content-Disposition: attachment; filename="'.$filename.'"');
         $out = fopen('php://output','w');
 
-        // Header kolom dinamis
         $res = mysqli_query($conn, "SELECT * FROM $t");
         if ($res) {
             $fields = [];
@@ -156,7 +145,6 @@ if (isset($_GET['backup'])) {
             fputcsv($out, $fields);
 
             while ($row = mysqli_fetch_assoc($res)) {
-                // Hindari mengekspor hash password? Tetap ekspor sesuai tabel saat ini.
                 fputcsv($out, array_values($row));
             }
         }
@@ -165,7 +153,6 @@ if (isset($_GET['backup'])) {
     }
 }
 
-// Label tampilan maintenance
 $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span class="badge bg-danger">Aktif</span>' : '<span class="badge bg-success">Nonaktif</span>';
 ?>
 <!DOCTYPE html>
@@ -488,7 +475,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
         box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
     }
 
-    /* Responsive adjustments */
     @media (max-width: 768px) {
         .page-title {
             font-size: 1.5rem;
@@ -529,7 +515,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
@@ -542,7 +527,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
 
     <div class="main-content">
         <div class="container">
-            <!-- Header -->
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
                 <div>
                     <h1 class="page-title fade-in-up"><i class="fas fa-sliders-h"></i> Pengaturan Sistem</h1>
@@ -556,7 +540,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 </div>
             </div>
 
-            <!-- Notifikasi -->
             <?php if(!empty($notif_success)): ?>
             <div class="alert alert-success fade-in-up mb-4">
                 <i class="fas fa-check-circle me-2"></i><?= h($notif_success); ?>
@@ -569,7 +552,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
             <?php endif; ?>
 
             <div class="row g-4">
-                <!-- Pengaturan Umum -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="section-title"><i class="fas fa-wrench me-2"></i> Pengaturan Umum</h5>
@@ -604,7 +586,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                     </div>
                 </div>
 
-                <!-- Fitur -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="section-title"><i class="fas fa-toggle-on me-2"></i> Pengaturan Fitur</h5>
@@ -641,7 +622,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                     </div>
                 </div>
 
-                <!-- Keamanan (Ubah Password Admin) -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="section-title"><i class="fas fa-lock me-2"></i> Keamanan Akun</h5>
@@ -670,7 +650,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                     </div>
                 </div>
 
-                <!-- Ekspor Data -->
                 <div class="col-lg-6">
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="section-title"><i class="fas fa-download me-2"></i> Ekspor Data (CSV)</h5>
@@ -693,7 +672,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 </div>
             </div>
 
-            <!-- Catatan Peningkatan -->
             <div class="card-custom p-4 mt-4 fade-in-up">
                 <h5 class="section-title"><i class="fas fa-shield-alt me-2"></i> Rekomendasi Keamanan</h5>
                 <div class="row g-3">
@@ -725,7 +703,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
                 </div>
             </div>
 
-            <!-- Back -->
             <div class="mt-4">
                 <a href="index.php" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i> Kembali ke Dashboard
@@ -736,7 +713,6 @@ $maintenance_badge = ($settings['maintenance_mode'] ?? '0') === '1' ? '<span cla
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Validasi form password
     document.addEventListener('DOMContentLoaded', function() {
         const passwordForm = document.querySelector('form[name="ubah_password"]');
         if (passwordForm) {

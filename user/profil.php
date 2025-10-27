@@ -10,10 +10,8 @@ if (empty($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 $user_id = (int)($_SESSION['id'] ?? 0);
 if ($user_id <= 0) { header('Location: ../login.php'); exit; }
 
-// Helper escape
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// ------- CSRF Token -------
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -22,7 +20,6 @@ function check_csrf($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], (string)$token);
 }
 
-// ------- Ambil data user -------
 $data = [];
 try {
     $stmt = $conn->prepare("SELECT id, nama, email, no_hp, alamat, password, COALESCE(created_at, NOW()) AS created_at FROM users WHERE id = ?");
@@ -40,7 +37,6 @@ try {
 $flash = ['type'=>null,'msg'=>null];
 $pwd_flash = ['type'=>null,'msg'=>null];
 
-// ------- Update data profil -------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     if (!check_csrf($_POST['csrf'] ?? '')) {
         $flash = ['type'=>'danger','msg'=>'Sesi kedaluwarsa. Muat ulang halaman dan coba lagi.'];
@@ -50,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         $no_hp  = trim($_POST['no_hp'] ?? '');
         $alamat = trim($_POST['alamat'] ?? '');
 
-        // Validasi sederhana
         if ($nama === '' || $email === '') {
             $flash = ['type'=>'danger','msg'=>'Nama dan email wajib diisi.'];
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -59,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             $flash = ['type'=>'danger','msg'=>'Format nomor HP tidak valid.'];
         } else {
             try {
-                // Cek duplikasi email milik user lain
                 $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? AND id <> ?");
                 $stmt->bind_param('si', $email, $user_id);
                 $stmt->execute();
@@ -74,10 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                     $stmt->execute();
                     $stmt->close();
 
-                    $_SESSION['nama'] = $nama; // perbarui sesi untuk navbar
+                    $_SESSION['nama'] = $nama; 
                     $flash = ['type'=>'success','msg'=>'Profil berhasil diperbarui.'];
 
-                    // Refresh data untuk ditampilkan
                     $stmt = $conn->prepare("SELECT id, nama, email, no_hp, alamat, password, COALESCE(created_at, NOW()) AS created_at FROM users WHERE id = ?");
                     $stmt->bind_param('i', $user_id);
                     $stmt->execute();
@@ -92,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 
-// ------- Update password (MD5 kompatibel) -------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ubah_password'])) {
     if (!check_csrf($_POST['csrf'] ?? '')) {
         $pwd_flash = ['type'=>'danger','msg'=>'Sesi kedaluwarsa. Muat ulang halaman dan coba lagi.'];
@@ -106,20 +98,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ubah_password'])) {
         } elseif (strlen($password_baru) < 6) {
             $pwd_flash = ['type'=>'danger','msg'=>'Password baru minimal 6 karakter.'];
         } else {
-            // Cek password lama: gunakan MD5 (sesuai sistem berjalan)
             $hash_lama = md5($password_lama);
             if (!hash_equals($hash_lama, (string)($data['password'] ?? ''))) {
                 $pwd_flash = ['type'=>'danger','msg'=>'Password lama salah.'];
             } else {
                 try {
-                    $hash_baru = md5($password_baru); // kompatibel dengan login.php saat ini
+                    $hash_baru = md5($password_baru); 
                     $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
                     $stmt->bind_param('si', $hash_baru, $user_id);
                     $stmt->execute();
                     $stmt->close();
 
                     $pwd_flash = ['type'=>'success','msg'=>'Password berhasil diubah.'];
-                    // Segarkan $data agar hash di memori ikut baru
                     $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
                     $stmt->bind_param('i', $user_id);
                     $stmt->execute();
@@ -134,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ubah_password'])) {
     }
 }
 
-// Tanggal gabung aman
 $created_at_display = '—';
 if (!empty($data['created_at'])) {
     $ts = strtotime($data['created_at']);
@@ -518,7 +507,6 @@ if (!empty($data['created_at'])) {
             </div>
 
             <div class="row">
-                <!-- Edit Profil -->
                 <div class="col-lg-8">
                     <div class="card-custom p-4 mb-4 fade-in-up">
                         <h4 class="section-title"><i class="fas fa-user-edit"></i> Edit Profil</h4>
@@ -568,7 +556,6 @@ if (!empty($data['created_at'])) {
                     </div>
                 </div>
 
-                <!-- Ubah Password -->
                 <div class="col-lg-4">
                     <div class="card-custom p-4 fade-in-up">
                         <h4 class="section-title"><i class="fas fa-lock"></i> Keamanan</h4>
@@ -605,7 +592,6 @@ if (!empty($data['created_at'])) {
                         </form>
                     </div>
 
-                    <!-- Info Akun -->
                     <div class="card-custom p-4 mt-4 fade-in-up">
                         <h4 class="section-title"><i class="fas fa-info-circle"></i> Info Akun</h4>
                         <div class="info-item">

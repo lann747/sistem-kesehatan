@@ -495,7 +495,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
     <script>
     (function() {
-        // Efek interaktif pada input fields
         document.querySelectorAll('.form-control').forEach(el => {
             el.addEventListener('focus', function() {
                 this.closest('.input-group').style.transform = 'translateY(-2px)';
@@ -506,7 +505,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             });
         });
 
-        // Efek ripple pada tombol login
         document.querySelector('.btn-login').addEventListener('click', function(e) {
             if (this.form.checkValidity()) {
                 const rect = this.getBoundingClientRect();
@@ -532,7 +530,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             }
         });
 
-        // Validasi form real-time
         const form = document.querySelector('form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -540,12 +537,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         function validateForm() {
             let isValid = true;
 
-            // Validasi email
             if (!emailInput.value || !emailInput.validity.valid) {
                 isValid = false;
             }
 
-            // Validasi password
             if (!passwordInput.value || passwordInput.value.length < 6) {
                 isValid = false;
             }
@@ -553,7 +548,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             return isValid;
         }
 
-        // Update status tombol berdasarkan validasi
         function updateButtonState() {
             const button = document.querySelector('.btn-login');
             if (validateForm()) {
@@ -568,7 +562,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         emailInput.addEventListener('input', updateButtonState);
         passwordInput.addEventListener('input', updateButtonState);
 
-        // Inisialisasi status tombol
         updateButtonState();
     })();
     </script>

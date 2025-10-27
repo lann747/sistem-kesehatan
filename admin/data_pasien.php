@@ -2,22 +2,18 @@
 session_start();
 require_once __DIR__ . '/../config/db.php';
 
-// Hanya admin yang boleh mengakses
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php'); 
     exit;
 }
 
-// Helper escape HTML
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// CSRF token
 if (empty($_SESSION['csrf_admin'])) {
     $_SESSION['csrf_admin'] = bin2hex(random_bytes(32));
 }
 $csrf = $_SESSION['csrf_admin'];
 
-// ---------- Handler: Tambah ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) { 
         http_response_code(400); 
@@ -47,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     }
 }
 
-// ---------- Handler: Update ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) { 
         http_response_code(400); 
@@ -80,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 
-// ---------- Handler: Hapus (POST) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) { 
         http_response_code(400); 
@@ -99,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
     exit;
 }
 
-// ---------- Statistik & List (dengan pagination) ----------
 $total = 0;
 if ($res = $conn->query("SELECT COUNT(*) AS total FROM pasien")) {
     $total = (int)($res->fetch_assoc()['total'] ?? 0);
@@ -469,7 +462,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
         border-left: 4px solid #dc2626;
     }
 
-    /* Modal Styles */
     .modal-content {
         border-radius: 16px;
         border: none;
@@ -653,7 +645,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -673,10 +664,8 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Header Section -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
@@ -698,7 +687,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah Pasien -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-plus-circle me-2"></i>
@@ -728,7 +716,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
                 </form>
             </div>
 
-            <!-- Tabel Data Pasien -->
             <div class="card-custom p-4 fade-in-up">
                 <div class="table-container">
                     <div class="table-responsive">
@@ -758,14 +745,12 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
                                     <td><span class="keluhan-badge"><?= h($d['keluhan']); ?></span></td>
                                     <td>
                                         <div class="d-flex gap-2 justify-content-center flex-wrap">
-                                            <!-- Tombol Edit -->
                                             <button type="button" class="btn-warning-custom" data-bs-toggle="modal"
                                                 data-bs-target="#editModal<?= (int)$d['id']; ?>">
                                                 <i class="fas fa-edit me-1"></i>
                                                 <span>Edit</span>
                                             </button>
 
-                                            <!-- Form Hapus -->
                                             <form method="POST"
                                                 onsubmit="return confirm('Yakin hapus data pasien <?= h($d['nama']); ?>?')"
                                                 class="d-inline">
@@ -794,7 +779,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
                     </div>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <nav class="mt-4">
                     <ul class="pagination justify-content-center">
@@ -808,7 +792,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
                 <?php endif; ?>
             </div>
 
-            <!-- Back Button -->
             <div class="mt-4 fade-in-up">
                 <a href="index.php" class="btn-secondary-custom">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -818,7 +801,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
         </div>
     </div>
 
-    <!-- Modal Edit - Ditempatkan di luar tabel -->
     <?php foreach ($list as $d): ?>
     <div class="modal fade" id="editModal<?= (int)$d['id']; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -871,17 +853,14 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
     </div>
     <?php endforeach; ?>
 
-    <!-- Vendor JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    // Animasi baris tabel
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('tbody tr').forEach((row, i) => {
             row.style.animationDelay = `${i * 0.05}s`;
         });
 
-        // Validasi input umur
         document.querySelectorAll('input[name="umur"]').forEach(inp => {
             inp.addEventListener('input', function() {
                 if (this.value) {
@@ -891,7 +870,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
             });
         });
 
-        // Efek hover pada kartu
         document.querySelectorAll('.card-custom').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-5px)';
@@ -902,7 +880,6 @@ $total_pages = max(1, (int)ceil(($total ?: 1)/$per_page));
             });
         });
 
-        // Debug modal
         document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
             button.addEventListener('click', function() {
                 const target = this.getAttribute('data-bs-target');

@@ -2,17 +2,14 @@
 session_start();
 include '../config/db.php';
 
-// Pastikan hanya user yang bisa mengakses
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php');
     exit;
 }
 
-// Konfigurasi kontak (opsional bisa diambil dari DB/pengaturan)
 const ADMIN_EMAIL = 'admin@gmail.com';
-const ADMIN_WHATSAPP = '6281234567890'; // ganti ke nomor WA admin (format internasional, tanpa +)
+const ADMIN_WHATSAPP = '6281234567890'; 
 
-// CSRF token
 if (empty($_SESSION['csrf_bantuan'])) {
     $_SESSION['csrf_bantuan'] = bin2hex(random_bytes(32));
 }
@@ -20,7 +17,6 @@ if (empty($_SESSION['csrf_bantuan'])) {
 $msg_success = '';
 $msg_error   = '';
 
-// Anti-spam sederhana: minimal jeda 20 detik antar submit
 $cooldown_seconds = 20;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lapor'])) {
@@ -42,24 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lapor'])) {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $msg_error = 'Format email tidak valid.';
     } else {
-        // Simulasikan sukses (tanpa penyimpanan/pengiriman)
         $_SESSION['last_submit_bantuan'] = $now;
         $msg_success = 'Terima kasih! Laporan Anda telah kami terima. Tim kami akan meninjau secepatnya.';
 
-        // ====================================================================
-        // TODO: kirim email / simpan ke DB tiket bantuan
-        // Contoh (butuh konfigurasi mail server/SMTP):
-        //
-        // $subject = "[Bantuan] {$topik} - {$nama}";
-        // $body    = "Pengirim: {$nama}\nEmail: {$email}\nTopik: {$topik}\n\nPesan:\n{$pesan}";
-        // @mail(ADMIN_EMAIL, $subject, $body, "From: {$email}\r\nReply-To: {$email}");
-        //
-        // Atau simpan ke tabel `tiket_bantuan` jika tersedia.
-        // ====================================================================
     }
 }
 
-// Helper
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 ?>
 <!DOCTYPE html>
@@ -473,7 +457,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i> Rafflesia Sehat</a>
@@ -505,9 +488,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
             <?php endif; ?>
 
             <div class="row g-4">
-                <!-- Kolom kiri: FAQ & Panduan -->
                 <div class="col-lg-7">
-                    <!-- Info Kontak -->
                     <div class="contact-info fade-in-up">
                         <h6><i class="fas fa-life-ring me-2"></i>Butuh Bantuan Cepat?</h6>
                         <div class="contact-item">
@@ -524,7 +505,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                         </div>
                     </div>
 
-                    <!-- Pencarian FAQ -->
                     <div class="card-custom p-4 mb-4 fade-in-up">
                         <h5 class="mb-3"><i class="fas fa-search me-2"></i>Cari Pertanyaan</h5>
                         <div class="input-group">
@@ -536,11 +516,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                             untuk hasil lebih akurat.</p>
                     </div>
 
-                    <!-- FAQ -->
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="mb-3"><i class="fas fa-circle-question me-2"></i>Pertanyaan yang Sering Diajukan</h5>
                         <div class="accordion" id="faqAccordion">
-                            <!-- Item 1 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h1">
                                     <button class="accordion-button" type="button" data-bs-toggle="collapse"
@@ -558,7 +536,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                     </div>
                                 </div>
                             </div>
-                            <!-- Item 2 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h2">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -576,7 +553,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                     </div>
                                 </div>
                             </div>
-                            <!-- Item 3 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h3">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -592,7 +568,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                     </div>
                                 </div>
                             </div>
-                            <!-- Item 4 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h4">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -610,7 +585,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                     </div>
                                 </div>
                             </div>
-                            <!-- Item 5 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h5">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -627,7 +601,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                                     </div>
                                 </div>
                             </div>
-                            <!-- Item 6 -->
                             <div class="accordion-item" data-faq>
                                 <h2 class="accordion-header" id="h6">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -647,7 +620,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                         </div>
                     </div>
 
-                    <!-- Panduan Singkat -->
                     <div class="card-custom p-4 mt-4 fade-in-up">
                         <h5 class="mb-3"><i class="fas fa-book-open me-2"></i>Panduan Singkat</h5>
                         <ol class="mb-3">
@@ -675,7 +647,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                     </div>
                 </div>
 
-                <!-- Kolom kanan: Form Laporan -->
                 <div class="col-lg-5">
                     <div class="card-custom p-4 fade-in-up">
                         <h5 class="mb-3"><i class="fas fa-headset me-2"></i>Kirim Laporan Kendala</h5>
@@ -721,7 +692,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
                         </form>
                     </div>
 
-                    <!-- Kotak tips -->
                     <div class="card-custom p-4 mt-4 fade-in-up">
                         <h6 class="mb-2"><i class="fas fa-lightbulb me-2"></i>Tips Pemecahan Masalah Cepat</h6>
                         <ul class="mb-0">
@@ -739,7 +709,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Dark mode toggle
     const toggleBtn = document.getElementById('themeToggle');
     const body = document.body;
     if (localStorage.getItem('theme') === 'dark') {
@@ -753,7 +722,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
-    // FAQ live search
     const searchInput = document.getElementById('faqSearch');
     const items = [...document.querySelectorAll('[data-faq]')];
     searchInput?.addEventListener('input', () => {
@@ -764,7 +732,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         });
     });
 
-    // Quick contact: WhatsApp
     const waBtn = document.getElementById('waBtn');
     if (waBtn) {
         const number = "<?= h(ADMIN_WHATSAPP); ?>";
@@ -773,7 +740,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
         waBtn.href = url;
     }
 
-    // Copy email admin
     const copyBtn = document.getElementById('copyEmail');
     copyBtn?.addEventListener('click', async () => {
         try {

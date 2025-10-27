@@ -9,10 +9,8 @@ if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Helper escape
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// --------- Ambil statistik ringkas ---------
 $stat = ['pasien'=>0, 'dokter'=>0, 'user'=>0];
 if ($r = $conn->query("SELECT COUNT(*) c FROM pasien")) { 
     $stat['pasien'] = (int)$r->fetch_assoc()['c']; 
@@ -27,7 +25,6 @@ if ($r = $conn->query("SELECT COUNT(*) c FROM users"))  {
     $r->close(); 
 }
 
-// --------- Recent activity ---------
 $recent_pasien = [];
 if ($res = $conn->query("SELECT id, nama, umur, alamat FROM pasien ORDER BY id DESC LIMIT 5")) {
     while ($row = $res->fetch_assoc()) { $recent_pasien[] = $row; }
@@ -420,7 +417,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -440,12 +436,10 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
             <h1 class="page-title fade-in-up">Dashboard Admin</h1>
 
-            <!-- Stats Section -->
             <div class="row stats-section fade-in-up">
                 <div class="col-md-3 mb-4">
                     <div class="stat-card">
@@ -478,7 +472,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
                 </div>
             </div>
 
-            <!-- Features Grid -->
             <div class="row g-4">
                 <div class="col-md-6 col-lg-4 fade-in-up">
                     <div class="dashboard-card p-4 text-center">
@@ -542,7 +535,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
                 </div>
             </div>
 
-            <!-- Recent Activity Section -->
             <div class="row g-4 recent-section">
                 <div class="col-lg-6 fade-in-up">
                     <div class="dashboard-card p-4">
@@ -612,7 +604,6 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
         </div>
     </div>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <p class="mb-0">© <?= date('Y'); ?> Rafflesia Sehat | Universitas Bengkulu</p>
@@ -622,13 +613,11 @@ if ($res = $conn->query("SELECT id, nama, spesialis FROM dokter ORDER BY id DESC
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
-    // Animasi kartu dengan delay bertahap
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.fade-in-up').forEach((element, index) => {
             element.style.animationDelay = `${index * 0.1}s`;
         });
 
-        // Efek hover interaktif
         document.querySelectorAll('.dashboard-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-8px)';

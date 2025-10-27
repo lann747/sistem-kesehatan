@@ -22,7 +22,6 @@ function count_admins($conn){
     return (int)$r['c'];
 }
 
-// Tambah user
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
@@ -41,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
         } elseif (strlen($password) < 6) {
             $flash['error'] = 'Password minimal 6 karakter.';
         } else {
-            // cek email unik
             $cek = mysqli_prepare($conn, "SELECT id FROM users WHERE email=?");
             mysqli_stmt_bind_param($cek, "s", $email);
             mysqli_stmt_execute($cek);
@@ -49,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
             if (mysqli_stmt_num_rows($cek) > 0) {
                 $flash['error'] = 'Email sudah terdaftar.';
             } else {
-                $hash = md5($password); // kompatibel login.php
+                $hash = md5($password); 
                 $stmt = mysqli_prepare($conn, "INSERT INTO users (nama, email, password, no_hp, alamat, role) VALUES (?,?,?,?,?,?)");
                 mysqli_stmt_bind_param($stmt, "ssssss", $nama, $email, $hash, $no_hp, $alamat, $role);
                 if (mysqli_stmt_execute($stmt)) {
@@ -64,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
     }
 }
 
-// Update user
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
@@ -83,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $flash['error'] = 'Format email tidak valid.';
         } else {
-            // Proteksi admin terakhir: bila target adalah admin terakhir dan akan didemote ke user
             $cur = mysqli_prepare($conn, "SELECT role, email FROM users WHERE id=?");
             mysqli_stmt_bind_param($cur, "i", $id);
             mysqli_stmt_execute($cur);
@@ -98,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
                 if ($isTargetAdmin && $role !== 'admin' && count_admins($conn) <= 1) {
                     $flash['error'] = 'Tidak bisa menurunkan peran admin terakhir.';
                 } else {
-                    // Cek email unik (kecuali milik sendiri)
                     $cek = mysqli_prepare($conn, "SELECT id FROM users WHERE email=? AND id<>?");
                     mysqli_stmt_bind_param($cek, "si", $email, $id);
                     mysqli_stmt_execute($cek);
@@ -127,22 +122,18 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
                             $flash[$ok ? 'success' : 'error'] = $ok ? 'Data pengguna diperbarui.' : 'Gagal memperbarui pengguna.';
                         }
                     }
-                    // if (isset($cek) && is_object($cek)) mysqli_stmt_close($cek);
                 }
             }
         }
     }
 }
 
-// Hapus user
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
 
-    // Tak boleh hapus diri sendiri
     if ($id === (int)($_SESSION['id'] ?? 0)) {
         $flash['error'] = 'Anda tidak bisa menghapus akun Anda sendiri.';
     } else {
-        // Cek role target
         $cur = mysqli_prepare($conn, "SELECT role FROM users WHERE id=?");
         mysqli_stmt_bind_param($cur, "i", $id);
         mysqli_stmt_execute($cur);
@@ -166,11 +157,9 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-// Hitung total user
 $total_users_q = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users");
 $total = (int)mysqli_fetch_assoc($total_users_q)['total'];
 
-// Ambil data users
 $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 ?>
 <!DOCTYPE html>
@@ -548,7 +537,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
         border-left: 4px solid #dc2626;
     }
 
-    /* Modal Styles */
     .modal-content {
         border-radius: 16px;
         border: none;
@@ -732,7 +720,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -754,7 +741,7 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 
     <div class="main-content">
         <div class="container">
-            <!-- Header -->
+
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
@@ -769,7 +756,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                 </div>
             </div>
 
-            <!-- Flash -->
             <?php if ($flash['success']): ?>
             <div class="alert alert-success alert-custom fade-in-up" role="alert">
                 <i class="fas fa-check-circle me-2"></i><?= h($flash['success']); ?>
@@ -781,7 +767,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-user-plus me-2"></i>
@@ -818,7 +803,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                 </form>
             </div>
 
-            <!-- Tabel Users -->
             <div class="card-custom p-4 fade-in-up">
                 <div class="table-container">
                     <div class="table-responsive">
@@ -872,7 +856,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                 </div>
             </div>
 
-            <!-- Back -->
             <div class="mt-4 fade-in-up">
                 <a href="index.php" class="btn-secondary-custom">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -882,7 +865,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
         </div>
     </div>
 
-    <!-- Modal Edit - Ditempatkan di luar tabel -->
     <?php mysqli_data_seek($users, 0); ?>
     <?php while($u=mysqli_fetch_assoc($users)): ?>
     <div class="modal fade" id="editModal<?= $u['id']; ?>" tabindex="-1" aria-hidden="true">
@@ -952,13 +934,11 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Animasi baris tabel
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('tbody tr').forEach((row, i) => {
             row.style.animationDelay = `${i * 0.05}s`;
         });
 
-        // Efek hover pada kartu
         document.querySelectorAll('.card-custom').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-5px)';
@@ -969,7 +949,6 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
             });
         });
 
-        // Debug modal
         document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
             button.addEventListener('click', function() {
                 const target = this.getAttribute('data-bs-target');

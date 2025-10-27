@@ -2,7 +2,6 @@
 session_start();
 include '../config/db.php';
 
-// Pastikan hanya user yang bisa mengakses
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
     header('Location: ../login.php');
     exit;
@@ -10,10 +9,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 
 $user_id = (int)$_SESSION['id'];
 
-/* ============================================================
-   MIGRASI RINGAN: tambah kolom ke tabel pasien bila belum ada
-   (butuh MySQL 8+ untuk IF NOT EXISTS)
-   ============================================================ */
 @mysqli_query($conn, "ALTER TABLE pasien 
     ADD COLUMN IF NOT EXISTS user_id INT NULL,
     ADD COLUMN IF NOT EXISTS status ENUM('baru','proses','selesai') NOT NULL DEFAULT 'baru',
@@ -21,9 +16,6 @@ $user_id = (int)$_SESSION['id'];
     ADD COLUMN IF NOT EXISTS updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ");
 
-/* ============================================================
-   Helper
-   ============================================================ */
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 function badge_status($s){
     $map = [
@@ -35,9 +27,6 @@ function badge_status($s){
     return '<span class="badge-status" style="background:'.$x[0].'">'.$x[1].'</span>';
 }
 
-/* ============================================================
-   Handle: Tambah keluhan (milik user sendiri)
-   ============================================================ */
 $msg_success = '';
 $msg_error   = '';
 
@@ -63,9 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     }
 }
 
-/* ============================================================
-   Handle: Update keluhan (milik user sendiri)
-   ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     $id     = (int)($_POST['id'] ?? 0);
     $nama   = trim($_POST['nama'] ?? '');
@@ -93,9 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 
-/* ============================================================
-   Handle: Hapus keluhan (milik user sendiri)
-   ============================================================ */
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
     $stmt = mysqli_prepare($conn, "DELETE FROM pasien WHERE id=? AND user_id=?");
@@ -110,9 +93,6 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-/* ============================================================
-   Pencarian & Filter & Pagination
-   ============================================================ */
 $q       = trim($_GET['q'] ?? '');
 $fstatus = trim($_GET['status'] ?? '');
 $wheres  = ["user_id = ?"];
@@ -131,12 +111,10 @@ if ($fstatus !== '' && in_array($fstatus, ['baru','proses','selesai'], true)) {
 }
 $whereSql = implode(" AND ", $wheres);
 
-// Pagination
 $page     = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 8;
 $offset   = ($page - 1) * $per_page;
 
-// Hitung total
 $sqlCnt = "SELECT COUNT(*) FROM pasien WHERE $whereSql";
 $stmtCnt = mysqli_prepare($conn, $sqlCnt);
 mysqli_stmt_bind_param($stmtCnt, $ptypes, ...$params);
@@ -146,7 +124,6 @@ $total  = $resCnt ? (int)mysqli_fetch_row($resCnt)[0] : 0;
 mysqli_stmt_close($stmtCnt);
 $total_pages = max(1, (int)ceil($total / $per_page));
 
-// Ambil data
 $sqlList = "SELECT id, nama, umur, alamat, keluhan, status, created_at, updated_at 
             FROM pasien 
             WHERE $whereSql 
@@ -165,9 +142,6 @@ $rows = [];
 if ($resList) while ($r = mysqli_fetch_assoc($resList)) $rows[] = $r;
 mysqli_stmt_close($stmtList);
 
-/* ============================================================
-   Statistik status (untuk user)
-   ============================================================ */
 function count_status($conn, $user_id, $status=null){
     if ($status === null){
         $st = mysqli_prepare($conn, "SELECT COUNT(*) FROM pasien WHERE user_id=?");
@@ -569,7 +543,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-heartbeat"></i>Rafflesia Sehat</a>
@@ -588,7 +561,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
             <h1 class="page-title">Riwayat Keluhan</h1>
 
-            <!-- Alerts -->
             <?php if ($msg_success): ?>
             <div class="alert alert-success alert-custom mb-4">
                 <i class="fas fa-check-circle me-2"></i><?= h($msg_success); ?>
@@ -600,7 +572,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
             </div>
             <?php endif; ?>
 
-            <!-- Stats -->
             <div class="row g-3 mb-4 fade-in-up">
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
@@ -628,7 +599,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                 </div>
             </div>
 
-            <!-- Form Tambah Keluhan -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3"><i class="fas fa-plus-circle me-2"></i> Tambah Keluhan</h5>
                 <form method="post" class="row g-3" novalidate>
@@ -660,7 +630,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                 </form>
             </div>
 
-            <!-- Filter & Search -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <form class="row g-3" method="get">
                     <div class="col-md-6">
@@ -689,7 +658,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                 </form>
             </div>
 
-            <!-- Tabel Keluhan -->
             <div class="card-custom p-4 fade-in-up">
                 <?php if ($total === 0): ?>
                 <div class="alert alert-info alert-custom">
@@ -740,7 +708,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
                     </table>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <nav class="mt-4 d-flex justify-content-center">
                     <ul class="pagination">
@@ -782,7 +749,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
         </div>
     </div>
 
-    <!-- Modal Edit -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -835,7 +801,6 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Prefill modal edit
     const editModal = document.getElementById('editModal');
     editModal?.addEventListener('show.bs.modal', (ev) => {
         const btn = ev.relatedTarget;
@@ -848,11 +813,9 @@ $stat_selesai = count_status($conn, $user_id, 'selesai');
             document.getElementById('f_keluhan').value = item.keluhan || '';
             document.getElementById('f_status').value = item.status || 'baru';
         } catch (e) {
-            // noop
         }
     });
 
-    // Validasi cepat untuk umur input di halaman
     document.addEventListener('input', function(e) {
         if (e.target && e.target.name === 'umur') {
             const v = parseInt(e.target.value || '0', 10);

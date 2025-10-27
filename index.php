@@ -107,7 +107,6 @@ if (isset($_SESSION['role'])) {
         text-align: center;
         position: relative;
         overflow: hidden;
-        /* clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%); */
     }
 
     .hero::before {
@@ -312,7 +311,6 @@ if (isset($_SESSION['role'])) {
     @media (max-width: 768px) {
         .hero {
             padding: 150px 0 80px;
-            /* clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%); */
         }
 
         .hero h1 {

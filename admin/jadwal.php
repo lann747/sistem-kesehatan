@@ -2,16 +2,13 @@
 session_start();
 include '../config/db.php';
 
-// Hanya admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
 }
 
-// --- Helper ---
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// --- CSRF ---
 if (empty($_SESSION['csrf_jadwal'])) {
     $_SESSION['csrf_jadwal'] = bin2hex(random_bytes(32));
 }
@@ -19,7 +16,6 @@ $csrf = $_SESSION['csrf_jadwal'];
 
 $flash = ['success'=>null,'error'=>null];
 
-// --- Pastikan tabel jadwal ada ---
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS jadwal (
     id INT AUTO_INCREMENT PRIMARY KEY,
     dokter_id INT NOT NULL,
@@ -31,12 +27,10 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS jadwal (
     CONSTRAINT fk_jadwal_dokter FOREIGN KEY (dokter_id) REFERENCES dokter(id) ON DELETE CASCADE
 ) ENGINE=InnoDB");
 
-// --- Ambil daftar dokter untuk dropdown ---
 $dokter_res = mysqli_query($conn, "SELECT id, nama, spesialis FROM dokter ORDER BY nama ASC");
 $dokter_opts = [];
 while ($r = mysqli_fetch_assoc($dokter_res)) { $dokter_opts[] = $r; }
 
-// --- Tambah Jadwal ---
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
@@ -48,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
         $kuota       = max(0, (int)($_POST['kuota'] ?? 0));
         $keterangan  = trim($_POST['keterangan'] ?? '');
 
-        // Validasi
         $err = '';
         if ($dokter_id <= 0 || $tanggal === '' || $jam_mulai === '' || $jam_selesai === '') {
             $err = 'Lengkapi semua field wajib.';
@@ -71,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['tambah'])) {
     }
 }
 
-// --- Update Jadwal ---
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         $flash['error'] = 'Sesi formulir kedaluwarsa. Muat ulang halaman.';
@@ -106,7 +98,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
     }
 }
 
-// --- Hapus Jadwal ---
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
     
@@ -118,7 +109,6 @@ if (isset($_GET['hapus'])) {
     $flash[$ok ? 'success' : 'error'] = $ok ? 'Jadwal berhasil dihapus.' : 'Gagal menghapus jadwal.';
 }
 
-// --- Filter & Data Tabel ---
 $filter_dokter = isset($_GET['dokter']) ? (int)$_GET['dokter'] : 0;
 $filter_tanggal = trim($_GET['tanggal'] ?? '');
 
@@ -139,10 +129,8 @@ ORDER BY j.tanggal DESC, j.jam_mulai ASC
 ";
 $jadwal_res = mysqli_query($conn, $q);
 
-// Hitung total jadwal
 $total_jadwal = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM jadwal"))['c'];
 
-// Simpan data untuk modal
 $jadwal_data = [];
 while($j = mysqli_fetch_assoc($jadwal_res)) {
     $jadwal_data[] = $j;
@@ -525,7 +513,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         border-left: 4px solid #dc2626;
     }
 
-    /* Modal Styles */
     .modal-content {
         border-radius: 16px;
         border: none;
@@ -653,7 +640,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -675,7 +661,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
 
     <div class="main-content">
         <div class="container">
-            <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
@@ -690,7 +675,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
                 </div>
             </div>
 
-            <!-- Flash -->
             <?php if ($flash['success']): ?>
             <div class="alert alert-success alert-custom fade-in-up" role="alert">
                 <i class="fas fa-check-circle me-2"></i><?= h($flash['success']); ?>
@@ -702,7 +686,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-plus-circle me-2"></i>
@@ -749,7 +732,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
                 </form>
             </div>
 
-            <!-- Filter -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-filter me-2"></i>
@@ -781,7 +763,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
                 </form>
             </div>
 
-            <!-- Tabel Jadwal -->
             <div class="card-custom p-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-list me-2"></i>
@@ -845,7 +826,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
                 </div>
             </div>
 
-            <!-- Back -->
             <div class="mt-4 fade-in-up">
                 <a href="index.php" class="btn-secondary-custom">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -855,7 +835,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
         </div>
     </div>
 
-    <!-- Modal Edit - Ditempatkan di luar tabel -->
     <?php foreach($jadwal_data as $j): ?>
     <div class="modal fade" id="editModal<?= $j['id']; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -930,9 +909,7 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Validasi client-side sederhana
     document.addEventListener('DOMContentLoaded', function() {
-        // Validasi untuk form tambah
         const formTambah = document.querySelector('form[method="POST"]');
         if (formTambah && !formTambah.querySelector('input[name="id"]')) {
             formTambah.addEventListener('submit', function(e) {
@@ -945,7 +922,6 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
             });
         }
 
-        // Validasi untuk modal edit
         const editModals = document.querySelectorAll('.modal');
         editModals.forEach(modal => {
             modal.addEventListener('show.bs.modal', function() {
@@ -965,12 +941,10 @@ while($j = mysqli_fetch_assoc($jadwal_res)) {
             });
         });
 
-        // Animasi baris tabel
         document.querySelectorAll('tbody tr').forEach((row, i) => {
             row.style.animationDelay = `${i * 0.05}s`;
         });
 
-        // Efek hover pada kartu
         document.querySelectorAll('.card-custom').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-5px)';

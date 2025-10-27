@@ -2,22 +2,18 @@
 session_start();
 require_once __DIR__ . '/../config/db.php';
 
-// Hanya admin yang boleh masuk
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php'); 
     exit;
 }
 
-// Helper escape HTML
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// CSRF token halaman admin
 if (empty($_SESSION['csrf_admin'])) {
     $_SESSION['csrf_admin'] = bin2hex(random_bytes(32));
 }
 $csrf = $_SESSION['csrf_admin'];
 
-// ---------- Handler: Tambah ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         http_response_code(400);
@@ -28,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     $no_hp    = trim($_POST['no_hp'] ?? '');
     $alamat   = trim($_POST['alamat'] ?? '');
 
-    // Validasi sederhana
     if ($nama === '' || $spesialis === '' || $no_hp === '' || $alamat === '') {
         $flash_err = 'Semua kolom wajib diisi.';
     } elseif (!preg_match('/^[0-9+\-\s]{8,20}$/', $no_hp)) {
@@ -47,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     }
 }
 
-// ---------- Handler: Update ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         http_response_code(400);
@@ -79,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 
-// ---------- Handler: Hapus (POST) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
         http_response_code(400);
@@ -98,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
     exit;
 }
 
-// ---------- Query ringkas: total & list ----------
 $total = 0;
 if ($res = $conn->query("SELECT COUNT(*) AS total FROM dokter")) {
     $row = $res->fetch_assoc();
@@ -106,7 +98,6 @@ if ($res = $conn->query("SELECT COUNT(*) AS total FROM dokter")) {
     $res->close();
 }
 
-// (Opsional) pagination sederhana
 $per_page = 50;
 $page = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $per_page;
@@ -653,7 +644,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -673,10 +663,8 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Header Section -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
@@ -698,7 +686,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
             </div>
             <?php endif; ?>
 
-            <!-- Form Tambah Dokter -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h5 class="mb-3">
                     <i class="fas fa-plus-circle me-2"></i>
@@ -727,7 +714,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
                 </form>
             </div>
 
-            <!-- Tabel Dokter -->
             <div class="card-custom p-4 fade-in-up">
                 <div class="table-container">
                     <div class="table-responsive">
@@ -786,7 +772,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
                     </div>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <nav class="mt-4">
                     <ul class="pagination justify-content-center">
@@ -800,7 +785,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
                 <?php endif; ?>
             </div>
 
-            <!-- Back Button -->
             <div class="mt-4 fade-in-up">
                 <a href="index.php" class="btn-secondary-custom">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -810,7 +794,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
         </div>
     </div>
 
-    <!-- Modal Edit - Ditempatkan di luar tabel -->
     <?php foreach ($list as $d): ?>
     <div class="modal fade" id="editModal<?= (int)$d['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -862,17 +845,14 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
     </div>
     <?php endforeach; ?>
 
-    <!-- Vendor JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    // Animasi baris tabel
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('tbody tr').forEach((row, i) => {
             row.style.animationDelay = `${i * 0.05}s`;
         });
 
-        // Efek hover pada kartu
         document.querySelectorAll('.card-custom').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-5px)';
@@ -883,7 +863,6 @@ $total_pages = (int)ceil(($total ?: 1)/$per_page);
             });
         });
 
-        // Debug modal
         document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
             button.addEventListener('click', function() {
                 const target = this.getAttribute('data-bs-target');

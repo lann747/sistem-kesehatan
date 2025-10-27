@@ -2,13 +2,11 @@
 session_start();
 include '../config/db.php';
 
-// Hanya admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
 }
 
-// Helper
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function fetch_all($res){
     $rows = [];
@@ -16,9 +14,6 @@ function fetch_all($res){
     return $rows;
 }
 
-// -------------------------------
-// EXPORT CSV ?export=pasien|dokter|users
-// -------------------------------
 if (isset($_GET['export'])) {
     $type = $_GET['export'];
     $filename = "export_" . $type . "_" . date('Ymd_His') . ".csv";
@@ -52,17 +47,11 @@ if (isset($_GET['export'])) {
     exit;
 }
 
-// -------------------------------
-// Data Ringkasan
-// -------------------------------
 $total_pasien = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM pasien"))['c'];
 $total_dokter = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM dokter"))['c'];
 $total_users  = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM users"))['c'];
 $total_admins = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='admin'"))['c'];
 
-// -------------------------------
-// Agregasi Kelompok Umur Pasien
-// -------------------------------
 $age_groups = [
     '0-12'  => "umur BETWEEN 0 AND 12",
     '13-17' => "umur BETWEEN 13 AND 17",
@@ -76,9 +65,6 @@ foreach ($age_groups as $label=>$cond) {
     $umur_counts[] = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM pasien WHERE $cond"))['c'];
 }
 
-// -------------------------------
-// Agregasi Spesialis Dokter
-// -------------------------------
 $spes = fetch_all(mysqli_query(
     $conn,
     "SELECT spesialis, COUNT(*) AS jumlah FROM dokter GROUP BY spesialis ORDER BY jumlah DESC, spesialis ASC"
@@ -86,9 +72,6 @@ $spes = fetch_all(mysqli_query(
 $spes_labels = array_map(fn($r)=>$r['spesialis']!==''?$r['spesialis']:'(Tidak diisi)', $spes);
 $spes_counts = array_map(fn($r)=>(int)$r['jumlah'], $spes);
 
-// -------------------------------
-// Keluhan Teratas (Top 10)
-// -------------------------------
 $keyword = trim($_GET['q'] ?? '');
 if ($keyword !== '') {
     $stmt = mysqli_prepare($conn, "SELECT keluhan, COUNT(*) AS jumlah FROM pasien WHERE keluhan LIKE CONCAT('%',?,'%') GROUP BY keluhan ORDER BY jumlah DESC, keluhan ASC LIMIT 10");
@@ -106,9 +89,6 @@ if ($keyword !== '') {
 $keluhan_labels = array_map(fn($r)=>$r['keluhan']!==''?$r['keluhan']:'(Tidak diisi)', $keluhan);
 $keluhan_counts = array_map(fn($r)=>(int)$r['jumlah'], $keluhan);
 
-// -------------------------------
-// Distribusi Role User
-// -------------------------------
 $roles = fetch_all(mysqli_query(
     $conn,
     "SELECT role, COUNT(*) AS jumlah FROM users GROUP BY role ORDER BY role"
@@ -116,9 +96,6 @@ $roles = fetch_all(mysqli_query(
 $role_labels = array_map(fn($r)=>$r['role'], $roles);
 $role_counts = array_map(fn($r)=>(int)$r['jumlah'], $roles);
 
-// -------------------------------
-// Tabel ringkas (preview)
-// -------------------------------
 $preview_pasien = fetch_all(mysqli_query($conn, "SELECT * FROM pasien ORDER BY id DESC LIMIT 8"));
 $preview_dokter = fetch_all(mysqli_query($conn, "SELECT * FROM dokter ORDER BY id DESC LIMIT 8"));
 $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp,alamat FROM users ORDER BY id DESC LIMIT 8"));
@@ -528,7 +505,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -550,7 +526,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
 
     <div class="main-content">
         <div class="container">
-            <!-- Header -->
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
                     <h1 class="page-title fade-in-up">
@@ -572,7 +547,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </div>
             </div>
 
-            <!-- Stats -->
             <div class="row g-4 mb-4 fade-in-up">
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
@@ -600,7 +574,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </div>
             </div>
 
-            <!-- Filter Keluhan -->
             <div class="card-custom p-4 mb-4 fade-in-up">
                 <h6 class="mb-3">
                     <i class="fas fa-filter me-2"></i>
@@ -623,7 +596,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </form>
             </div>
 
-            <!-- Charts -->
             <div class="row g-4 mb-4">
                 <div class="col-lg-6 fade-in-up">
                     <div class="card-custom p-4">
@@ -671,7 +643,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                 </div>
             </div>
 
-            <!-- Tabel Preview -->
             <div class="row g-4">
                 <div class="col-lg-6 fade-in-up">
                     <div class="card-custom p-4">
@@ -818,7 +789,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
                     </div>
                 </div>
 
-                <!-- Back -->
                 <div class="col-12 fade-in-up">
                     <a href="index.php" class="btn-secondary-custom mt-2">
                         <i class="fas fa-arrow-left me-2"></i>
@@ -829,12 +799,10 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         </div>
     </div>
 
-    <!-- CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <script>
-    // Data dari PHP
     const umurLabels = <?= json_encode($umur_labels, JSON_UNESCAPED_UNICODE); ?>;
     const umurCounts = <?= json_encode($umur_counts, JSON_UNESCAPED_UNICODE); ?>;
 
@@ -847,7 +815,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
     const roleLabels = <?= json_encode($role_labels, JSON_UNESCAPED_UNICODE); ?>;
     const roleCounts = <?= json_encode($role_counts, JSON_UNESCAPED_UNICODE); ?>;
 
-    // Chart colors
     const chartColors = {
         primary: '#16a34a',
         secondary: '#10b981',
@@ -856,7 +823,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         info: '#3b82f6'
     };
 
-    // Chart Umur (Bar)
     new Chart(document.getElementById('chartUmur'), {
         type: 'bar',
         data: {
@@ -885,7 +851,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         }
     });
 
-    // Chart Spesialis (Bar Horizontal bila label banyak)
     new Chart(document.getElementById('chartSpesialis'), {
         type: 'bar',
         data: {
@@ -915,7 +880,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         }
     });
 
-    // Chart Keluhan (Bar)
     new Chart(document.getElementById('chartKeluhan'), {
         type: 'bar',
         data: {
@@ -950,7 +914,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         }
     });
 
-    // Chart Role (Pie)
     new Chart(document.getElementById('chartRole'), {
         type: 'pie',
         data: {
@@ -967,7 +930,6 @@ $preview_users  = fetch_all(mysqli_query($conn, "SELECT id,nama,email,role,no_hp
         }
     });
 
-    // Efek hover pada kartu
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.card-custom').forEach(card => {
             card.addEventListener('mouseenter', function() {
